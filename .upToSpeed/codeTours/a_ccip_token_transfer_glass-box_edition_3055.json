@@ -1,0 +1,189 @@
+{
+  "title": "A CCIP Token Transfer: Glass-Box Edition",
+  "id": "w9zan2Ntx/pJjkFmx1IzQaZH4veWYXCgoKf5cWMawkw=",
+  "originalId": 3055,
+  "position": 3,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Follow a real **CCIP** token-transfer: starting when a **dApp** calls `Router.ccipSend` on the source chain and ending when the destination `OffRamp` releases or mints tokens. At each hop we show the exact **structs**, **events** and `Go` `OCR2` code that propel the payload.",
+      "title": "",
+      "id": "36515"
+    },
+    {
+      "type": "highlight",
+      "description": "`Router.ccipSend` collects fees and tokens, then hands control to the lane’s `OnRamp`.\n- Lines 117–134: fee is quoted via `getFee` and transferred to the `OnRamp` (native is auto-wrapped).\n- Lines 137–145: every payload-token is moved into its `TokenPool`.\n- Line 148: `forwardFromRouter` is invoked with `feeTokenAmount` and the original sender.\n",
+      "file": "contracts/src/v0.8/ccip/Router.sol",
+      "highlight": [
+        {
+          "start": 108,
+          "end": 148
+        }
+      ],
+      "title": "",
+      "id": "36516"
+    },
+    {
+      "type": "highlight",
+      "description": "Inside `forwardFromRouter` a lane-unique `Internal.EVM2EVMMessage` is assembled.\n\n- Lines 270–276: rejects cursed lanes or wrong selector.\n- Lines 309–334: bumps `sequenceNumber` and sets per-sender `nonce` when ordered delivery is requested.\n- Lines 342–360: calls `lockOrBurn` on each source `TokenPool`, capturing per-token metadata.\n- Line 396: hashes the `messageId`.\n- Lines 395–397: emits `CCIPSendRequested` (the only log **Commit OCR** watches).",
+      "file": "contracts/src/v0.8/ccip/onRamp/EVM2EVMOnRamp.sol",
+      "highlight": [
+        {
+          "start": 261,
+          "end": 339
+        }
+      ],
+      "title": "",
+      "id": "36517"
+    },
+    {
+      "type": "highlight",
+      "description": "A lane-specific `metadataHash` is embedded so identical messages on different lanes still hash to different **Merkle** leaves.",
+      "file": "contracts/src/v0.8/ccip/onRamp/EVM2EVMOnRamp.sol",
+      "highlight": [
+        {
+          "start": 67,
+          "end": 75
+        }
+      ],
+      "title": "",
+      "id": "36518"
+    },
+    {
+      "type": "highlight",
+      "description": "**Commit OCR plugin – Observation.**\nNodes read `CCIPSendRequested` logs and build `CommitObservation` with the next contiguous `[Min,Max]` sequence range plus gas & token price deltas.",
+      "file": "core/services/ocr2/plugins/ccip/ccipcommit/ocr2.go",
+      "highlight": [
+        {
+          "start": 100,
+          "end": 142
+        }
+      ],
+      "title": "",
+      "id": "36519"
+    },
+    {
+      "type": "highlight",
+      "description": "**Commit OCR plugin – Report.**\n\n`buildReport` fetches the messages again, builds a Merkle tree and returns `CommitStoreReport{MerkleRoot,Interval,GasPrices,TokenPrices}` that `Solidity CommitStore` can decode.",
+      "file": "core/services/ocr2/plugins/ccip/ccipcommit/ocr2.go",
+      "highlight": [
+        {
+          "start": 560,
+          "end": 605
+        }
+      ],
+      "title": "",
+      "id": "36520"
+    },
+    {
+      "type": "highlight",
+      "description": "`CommitStore._report` validates interval, stores the root timestamp and emits `ReportAccepted` – now roots are on-chain awaiting **RMN** blessing and **Exec phase**.",
+      "file": "contracts/src/v0.8/ccip/CommitStore.sol",
+      "highlight": [
+        {
+          "start": 232,
+          "end": 245
+        }
+      ],
+      "title": "",
+      "id": "36521"
+    },
+    {
+      "type": "highlight",
+      "description": "Exec `OCR plugin` – Observation.\nFor each blessed, unexpired root it loads the messages, batches them within gas/data/rate limits and returns `ObservedMessage{SeqNr,TokenData}`.",
+      "file": "core/services/ocr2/plugins/ccip/ccipexec/ocr2.go",
+      "highlight": [
+        {
+          "start": 104,
+          "end": 142
+        }
+      ],
+      "title": "",
+      "id": "36522"
+    },
+    {
+      "type": "highlight",
+      "description": "**Exec `OCR` plugin – Report.**\n`buildReport` adds Merkle proofs, encodes `ExecutionReport`, verifies it locally against `CommitStore` and hands bytes to the `OCR` transmitter.",
+      "file": "core/services/ocr2/plugins/ccip/ccipexec/ocr2.go",
+      "highlight": [
+        {
+          "start": 407,
+          "end": 469
+        }
+      ],
+      "title": "",
+      "id": "36523"
+    },
+    {
+      "type": "highlight",
+      "description": "OffRamp receives the report and enters `_execute`.\n\n- Lines 321–335 – sets each message **IN_PROGRESS**.\n- Line 340 – optional gas overrides for manual exec.\n- Lines 408–447 – after proof checks, `executeSingleMessage` is called.",
+      "file": "contracts/src/v0.8/ccip/offRamp/EVM2EVMOffRamp.sol",
+      "highlight": [
+        {
+          "start": 280,
+          "end": 307
+        }
+      ],
+      "title": "",
+      "id": "36524"
+    },
+    {
+      "type": "highlight",
+      "description": "`executeSingleMessage` first unlocks / mints tokens then delivers the payload.\n\n- 505-517 – `_releaseOrMintTokens` returns destTokenAmounts.\n- 526-530 – skip callback if no data or receiver not contract.\n- 532-543 – `Router.routeMessage` invokes `receiver.ccipReceive` with exact-gas envelope.",
+      "file": "contracts/src/v0.8/ccip/offRamp/EVM2EVMOffRamp.sol",
+      "highlight": [
+        {
+          "start": 498,
+          "end": 543
+        }
+      ],
+      "title": "",
+      "id": "36525"
+    },
+    {
+      "type": "highlight",
+      "description": "Token safety: `_releaseOrMintToken` validates pool via `ERC-165`, calls `releaseOrMint`, then double-checks receiver balance delta to guard against malicious pools.",
+      "file": "contracts/src/v0.8/ccip/offRamp/EVM2EVMOffRamp.sol",
+      "highlight": [
+        {
+          "start": 654,
+          "end": 723
+        }
+      ],
+      "title": "",
+      "id": "36526"
+    },
+    {
+      "type": "highlight",
+      "description": "`LockReleaseTokenPool` illustrates a simple pool that locks on source and unlocks on destination, implementing `lockOrBurn` / `releaseOrMint` used by `OnRamp` and `OffRamp`.",
+      "file": "contracts/src/v0.8/ccip/pools/LockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 1,
+          "end": 40
+        }
+      ],
+      "title": "",
+      "id": "36527"
+    },
+    {
+      "type": "highlight",
+      "description": "Auto-generated `Go` bindings expose `ForwardFromRouter` with typed `params` so `Go` plugins can decode logs and encode calls without manual **ABI** fiddling.",
+      "file": "core/gethwrappers/ccip/generated/evm_2_evm_onramp/evm_2_evm_onramp.go",
+      "highlight": [
+        {
+          "start": 80,
+          "end": 110
+        }
+      ],
+      "title": "",
+      "id": "36528"
+    },
+    {
+      "type": "textOnly",
+      "description": "`Router` → `OnRamp` → `CommitStore` → `OffRamp` → receiver: the payload travels through on-chain contracts, off-chain `OCR2` commit & exec plugins and generated `Go` bindings. Each hop re-validates hashes, prices or balances so that by the time `ccipReceive` fires fees are settled and tokens are safely released.",
+      "title": "",
+      "id": "36529"
+    }
+  ]
+}

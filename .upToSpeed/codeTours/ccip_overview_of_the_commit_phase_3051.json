@@ -1,0 +1,124 @@
+{
+  "title": "CCIP: Overview of the Commit Phase",
+  "id": "XdX28wJbtzRu5m4MKzjcshjyxfbcaKZTArob4J0/PDc=",
+  "originalId": 3051,
+  "position": 1,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Inside CCIP the term `commit` it is the first on-destination-chain phase that finalises a batch of cross-chain messages plus the fee data they will need later.  Two pieces make it work:\n- `CommitStore` – the Solidity contract that stores the batch on the destination chain and offers verification helpers.\n- `ccipcommit` – an OCR 2 plugin that watches both chains, builds the batch and submits the signed report.\nThe next steps walk through the key parts of each component.",
+      "title": "",
+      "id": "36505"
+    },
+    {
+      "type": "highlight",
+      "description": "`CommitStore` fixes the report layout.  `StaticConfig` & `DynamicConfig` say where the store lives; `Interval` and `CommitReport` describe what every report must contain – a contiguous sequence-number range and the Merkle root of the messages in that range.",
+      "file": "contracts/src/v0.8/ccip/CommitStore.sol",
+      "highlight": [
+        {
+          "start": 33,
+          "end": 60
+        }
+      ],
+      "title": "",
+      "id": "36506"
+    },
+    {
+      "type": "highlight",
+      "description": "`_report` (called by OCR after enough signatures) makes the on-chain state advance only if:\n1. price updates inside the report are newer than the last accepted round (`215-224`);\n2. the interval exactly matches the store’s next expected seq-number (`232-238`);\n3. the root is new.\nWhen those checks pass it stores the root, bumps `s_minSeqNr` and emits `ReportAccepted`.",
+      "file": "contracts/src/v0.8/ccip/CommitStore.sol",
+      "highlight": [
+        {
+          "start": 207,
+          "end": 245
+        }
+      ],
+      "title": "",
+      "id": "36507"
+    },
+    {
+      "type": "highlight",
+      "description": "`verify()` lets anyone prove that a set of message leaves is covered by a previously blessed root. It rejects immediately if the root is not blessed by **RMN**.",
+      "file": "contracts/src/v0.8/ccip/CommitStore.sol",
+      "highlight": [
+        {
+          "start": 187,
+          "end": 194
+        }
+      ],
+      "title": "",
+      "id": "36508"
+    },
+    {
+      "type": "highlight",
+      "description": "Dynamic parameters (currently just the `PriceRegistry` address) are pushed through the OCR config pipeline; when they change, the contract resets its price-epoch tracker so stale price rounds cannot sneak in under a new config.",
+      "file": "contracts/src/v0.8/ccip/CommitStore.sol",
+      "highlight": [
+        {
+          "start": 269,
+          "end": 292
+        }
+      ],
+      "title": "",
+      "id": "36509"
+    },
+    {
+      "type": "highlight",
+      "description": "The plugin’s **Observation** step looks at on-chain data only:\n- gets the `commit store`’s next expected `seq-number`;\n- scans the source `OnRamp` logs to find the contiguous message range waiting for commitment;\n- gathers gas- and token-price deltas needed on the destination chain;\n\nthen returns all of that as a `CommitObservation`.",
+      "file": "core/services/ocr2/plugins/ccip/ccipcommit/ocr2.go",
+      "highlight": [
+        {
+          "start": 101,
+          "end": 134
+        }
+      ],
+      "title": "",
+      "id": "36510"
+    },
+    {
+      "type": "highlight",
+      "description": "In `Report()` the nodes compare observations, agree on a common interval & price set, and call `buildReport`. If there is nothing new – no messages and no price deltas – they vote `nil` to save gas.",
+      "file": "core/services/ocr2/plugins/ccip/ccipcommit/ocr2.go",
+      "highlight": [
+        {
+          "start": 269,
+          "end": 307
+        }
+      ],
+      "title": "",
+      "id": "36511"
+    },
+    {
+      "type": "highlight",
+      "description": "`buildReport()` re-loads the definitive logs for the agreed interval, builds the Merkle tree of message hashes, and returns `CommitStoreReport{MerkleRoot, Interval, GasPrices, TokenPrices}`. The helper enforces contiguity so bad intervals are caught off-chain.",
+      "file": "core/services/ocr2/plugins/ccip/ccipcommit/ocr2.go",
+      "highlight": [
+        {
+          "start": 560,
+          "end": 603
+        }
+      ],
+      "title": "",
+      "id": "36512"
+    },
+    {
+      "type": "highlight",
+      "description": "Before transmitting the report the plugin reruns staleness checks:\n- If a root is present the commit store’s `nextSeq` must still equal `Interval.Min`.\n- If only prices are present they must deviate (or heartbeat) relative to the registry’s last `epoch-and-round`.\n\nStale reports are silently dropped so the **DON** never spends gas on doomed transactions.",
+      "file": "core/services/ocr2/plugins/ccip/ccipcommit/ocr2.go",
+      "highlight": [
+        {
+          "start": 678,
+          "end": 710
+        }
+      ],
+      "title": "",
+      "id": "36513"
+    },
+    {
+      "type": "textOnly",
+      "description": "**Commit** therefore provides three guarantees:\n1. Each source-chain message appears once – in order – on the destination chain, referenced by a Merkle root.\n2. Gas and token price data that the later **Execute phase** needs travel atomically with the batch.\n3. Faulty, stale or conflicting data are filtered off-chain, keeping on-chain state consistent and cheap.",
+      "title": "",
+      "id": "36514"
+    }
+  ]
+}

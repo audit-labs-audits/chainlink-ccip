@@ -1,0 +1,189 @@
+{
+  "title": "The evolution of Chainlink Automation 1.2 → 2.3",
+  "id": "06iJ2LAzq2QUHi7m/SMF/56FkCGnbNWUXtWhuEsCijg=",
+  "originalId": 3058,
+  "position": 5,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "We will visit the three registry generations one after another, then look at how the `Go OCR2-keeper plugin` adapts to each `ABI`.",
+      "title": "",
+      "id": "36550"
+    },
+    {
+      "type": "highlight",
+      "description": "**v1.2** keeps all mutable upkeep data in a single `six-word struct` – simple, but every `perform()` touch costs gas.",
+      "file": "contracts/src/v0.8/automation/v1_2/KeeperRegistry1_2.sol",
+      "highlight": [
+        {
+          "start": 19,
+          "end": 27
+        }
+      ],
+      "title": "",
+      "id": "36551"
+    },
+    {
+      "type": "highlight",
+      "description": "`checkUpkeep()` returns only (`performData` + `cost` numbers). No explicit error codes, and the registry calls the target directly.",
+      "file": "contracts/src/v0.8/automation/v1_2/KeeperRegistry1_2.sol",
+      "highlight": [
+        {
+          "start": 221,
+          "end": 235
+        }
+      ],
+      "title": "",
+      "id": "36552"
+    },
+    {
+      "type": "highlight",
+      "description": "v2.1 introduces a richer `Upkeep` struct – separate **pause flag**, **lastPerformed block**, and an `AutomationForwarder` address used instead of calling the target directly.",
+      "file": "contracts/src/v0.8/automation/v2_1/KeeperRegistryBase2_1.sol",
+      "highlight": [
+        {
+          "start": 198,
+          "end": 208
+        }
+      ],
+      "title": "",
+      "id": "36553"
+    },
+    {
+      "type": "highlight",
+      "description": "`HotVars` packs the handful of variables `transmit()` needs, reducing repeated SLOADs inside the hot path.",
+      "file": "contracts/src/v0.8/automation/v2_1/KeeperRegistryBase2_1.sol",
+      "highlight": [
+        {
+          "start": 214,
+          "end": 223
+        }
+      ],
+      "title": "",
+      "id": "36554"
+    },
+    {
+      "type": "highlight",
+      "description": "`checkUpkeep()` now returns `FailureReason`, `gasUsed`, `limits`, and `prices` – letting off-chain nodes see *why* an upkeep was skipped.",
+      "file": "contracts/src/v0.8/automation/v2_1/KeeperRegistryLogicA2_1.sol",
+      "highlight": [
+        {
+          "start": 47,
+          "end": 61
+        }
+      ],
+      "title": "",
+      "id": "36555"
+    },
+    {
+      "type": "highlight",
+      "description": "The per-upkeep `AutomationForwarder` relays `perform()` with exact gas – enabling meta-transactions and allowing registry migrations without changing `ACL` addresses.",
+      "file": "contracts/src/v0.8/automation/AutomationForwarder.sol",
+      "highlight": [
+        {
+          "start": 35,
+          "end": 58
+        }
+      ],
+      "title": "",
+      "id": "36556"
+    },
+    {
+      "type": "highlight",
+      "description": "**v2.3** extends `Upkeep` with `billingToken` and `overridesEnabled`, the basis for multi-token billing and per-upkeep price tweaks.",
+      "file": "contracts/src/v0.8/automation/v2_3/AutomationRegistryLogicA2_3.sol",
+      "highlight": [
+        {
+          "start": 96,
+          "end": 108
+        }
+      ],
+      "title": "",
+      "id": "36557"
+    },
+    {
+      "type": "highlight",
+      "description": "HotVars grows: `reorgProtectionEnabled` and a `chainModule` interface allow `Logic C` to price `L2 gas` and defend against deep re-orgs.",
+      "file": "contracts/src/v0.8/automation/v2_3/AutomationRegistryBase2_3.sol",
+      "highlight": [
+        {
+          "start": 270,
+          "end": 279
+        }
+      ],
+      "title": "",
+      "id": "36558"
+    },
+    {
+      "type": "highlight",
+      "description": "`_getMaxPayment()` shows registry-side billing: feed lookups, L1 fee estimates and per-token `BillingConfig` decide the maximum charge.",
+      "file": "contracts/src/v0.8/automation/v2_3/AutomationRegistryBase2_3.sol",
+      "highlight": [
+        {
+          "start": 741,
+          "end": 760
+        }
+      ],
+      "title": "",
+      "id": "36559"
+    },
+    {
+      "type": "highlight",
+      "description": "`Go plugin` – `v20 encoder` (used with registries ≤ v2.0) packs `upkeepIds` and `wrappedPerform` tuples into four report fields.",
+      "file": "core/services/ocr2/plugins/ocr2keeper/evmregistry/v20/encoder.go",
+      "highlight": [
+        {
+          "start": 30,
+          "end": 37
+        }
+      ],
+      "title": "",
+      "id": "36560"
+    },
+    {
+      "type": "highlight",
+      "description": "`EncodeReport()` loops through results, collecting `fastGas/link` once and wrapping each `performData` with **check block info**.",
+      "file": "core/services/ocr2/plugins/ocr2keeper/evmregistry/v20/encoder.go",
+      "highlight": [
+        {
+          "start": 57,
+          "end": 74
+        }
+      ],
+      "title": "",
+      "id": "36561"
+    },
+    {
+      "type": "highlight",
+      "description": "`v21 encoder` (`registries` ≥ `v2.1`) adds `GasLimits`, `Triggers` and `PerformDatas` arrays – matching the new on-chain **ABI**.",
+      "file": "core/services/ocr2/plugins/ocr2keeper/evmregistry/v21/encoding/encoder.go",
+      "highlight": [
+        {
+          "start": 31,
+          "end": 44
+        }
+      ],
+      "title": "",
+      "id": "36562"
+    },
+    {
+      "type": "highlight",
+      "description": "Each trigger is ABI-packed with block/log data via `core.PackTrigger`, letting the plugin support conditional *and* log-based upkeeps.",
+      "file": "core/services/ocr2/plugins/ocr2keeper/evmregistry/v21/encoding/encoder.go",
+      "highlight": [
+        {
+          "start": 65,
+          "end": 74
+        }
+      ],
+      "title": "",
+      "id": "36563"
+    },
+    {
+      "type": "textOnly",
+      "description": "Summary – `v1.2` → `v2.1` splits storage and adds meta-transactions; `v2.1` → `v2.3` enables multi-token billing and L2 awareness.  The `OCR2-keeper` plugin just swaps encoders (`v20`→`v21`) so jobs stay compatible while features evolve.",
+      "title": "",
+      "id": "36564"
+    }
+  ]
+}
