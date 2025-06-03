@@ -6,7 +6,7 @@
   "steps": [
     {
       "type": "textOnly",
-      "description": "All Solidity for Chainlink-CCIP sits under `chains/evm/contracts/`. Here you’ll find the **Router**, **OnRamp**, **OffRamp**, `pools/`, **FeeQuoter**, **NonceManager**, `rmn/`, `tokenAdminRegistry/`, `capability/`, `interfaces/`, `libraries/` plus example dApps.",
+      "description": "All Solidity code for Chainlink-CCIP is located under `chains/evm/contracts/`. This directory includes:\n- `Router.sol`\n- `OnRamp/`\n- `OffRamp/`\n- `pools/`\n- `FeeQuoter.sol`\n- `NonceManager.sol`\n- `rmn/`\n- `tokenAdminRegistry/`\n- `capability/`\n- `interfaces/`\n- `libraries/`\n- Example dApps",
       "title": "",
       "id": "37634"
     },
