@@ -1,0 +1,124 @@
+{
+  "title": "4.8: USDCTokenPool – CCTP Burn/Mint Integration",
+  "id": "U0xqBp28gMhQNTGabTP3QOKdCqkXaDDAWeLy8nZ3tNU=",
+  "originalId": 3103,
+  "position": 23,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "`USDCTokenPool` coordinates **USDC** transfers across chains via **Circle**’s `CCTP`. The tour starts with how the contract records allowed destinations, then walks through the `burn-on-source / mint-on-destination` flow, the message validation checks, the admin controls, and finally the trust model.",
+      "title": "",
+      "id": "37090"
+    },
+    {
+      "type": "highlight",
+      "description": "A destination chain is represented by struct `Domain` (74-77) and is looked up with its CCIP `chainSelector` in `s_chainToDomain` (80-81).\n\n- `allowedCaller` – contract allowed to mint on the remote chain.\n- `domainIdentifier` – Circle’s “domain” id.\n- `enabled` – quick on/off switch for that route.",
+      "file": "chains/evm/contracts/pools/USDC/USDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 70,
+          "end": 81
+        }
+      ],
+      "title": "",
+      "id": "37091"
+    },
+    {
+      "type": "highlight",
+      "description": "Constructor wiring and safety checks.\n1. Lines 90-95 reject unsupported `MessageTransmitter` / `TokenMessenger` versions.\n2. Line 96 asserts that the proxy really wraps the same transmitter instance.\n3. Lines 100-102 store immutable config and give `TokenMessenger` an **unlimited allowance** so it can burn `USDC` that the pool holds.",
+      "file": "chains/evm/contracts/pools/USDC/USDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 83,
+          "end": 103
+        }
+      ],
+      "title": "",
+      "id": "37092"
+    },
+    {
+      "type": "highlight",
+      "description": "`SourceTokenDataPayload` carries `{nonce, sourceDomain}`. It is ABI-encoded and returned as `destPoolData` by `lockOrBurn` so the destination side can later prove it is dealing with the exact `CCTP` message that burned the funds.",
+      "file": "chains/evm/contracts/pools/USDC/USDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 52,
+          "end": 55
+        }
+      ],
+      "title": "",
+      "id": "37093"
+    },
+    {
+      "type": "highlight",
+      "description": "`lockOrBurn()`: burn on source chain.\n\n- Lines 115–117 fetch `Domain`; disabled routes revert.\n- Lines 118–122 enforce that the `receiver` is a 32-byte value and decode it (CCTP expects `bytes32`).\n- Lines 126–128 call `TokenMessenger.depositForBurnWithCaller`, which burns **USDC** and emits Circle’s internal event; `domain.allowedCaller` becomes `destinationCaller`.\n- Lines 130–140 emit the pool’s own event and return `destPoolData` that embeds `SourceTokenDataPayload` (line 139).",
+      "file": "chains/evm/contracts/pools/USDC/USDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 110,
+          "end": 141
+        }
+      ],
+      "title": "",
+      "id": "37094"
+    },
+    {
+      "type": "highlight",
+      "description": "`releaseOrMint()`: mint on destination chain.\n- Lines 158–162 decode the trusted `sourcePoolData` and the untrusted `offchainTokenData` (**Circle message + attestation**).\n- Line 163 invokes `_validateMessage` for cheap local sanity checks (version, domains, nonce).\n- Lines 165–167 forward message & attestation to `i_messageTransmitterProxy.receiveMessage`; if **Circle signature verification** fails the call reverts and nothing is minted.",
+      "file": "chains/evm/contracts/pools/USDC/USDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 154,
+          "end": 178
+        }
+      ],
+      "title": "",
+      "id": "37095"
+    },
+    {
+      "type": "highlight",
+      "description": "`_validateMessage()` parses raw bytes with inline assembly (195-216) to avoid extra copies.\nChecks enforced:\n– Version must be 0 (205).\n– `sourceDomain` must equal `sourcePoolData.sourceDomain` (218-220).\n– `destinationDomain` must equal this pool’s local domain (221-223).\n– Nonce must match (224-225).",
+      "file": "chains/evm/contracts/pools/USDC/USDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 180,
+          "end": 225
+        }
+      ],
+      "title": "",
+      "id": "37096"
+    },
+    {
+      "type": "highlight",
+      "description": "`getDomain()` is a simple view helper for off-chain callers to retrieve the stored **Domain** for a `chainSelector`.",
+      "file": "chains/evm/contracts/pools/USDC/USDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 231,
+          "end": 236
+        }
+      ],
+      "title": "",
+      "id": "37097"
+    },
+    {
+      "type": "highlight",
+      "description": "`setDomains()`: owner-only admin function that bulk-updates the `s_chainToDomain` mapping by looping over each `DomainUpdate`, reverting on zero `allowedCaller` or `destChainSelector`, writing the new `Domain`, and emitting `DomainsSet` for indexing.",
+      "file": "chains/evm/contracts/pools/USDC/USDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 238,
+          "end": 255
+        }
+      ],
+      "title": "",
+      "id": "37098"
+    },
+    {
+      "type": "textOnly",
+      "description": "Trust model: `USDCTokenPool` does not verify **Circle** attestation signatures itself. After local field checks (`_validateMessage`) it delegates to `CCTPMessageTransmitterProxy` (`releaseOrMint` `165-167`). The proxy calls **Circle**’s `MessageTransmitter`, which enforces signatures by **Circle**’s notaries. Only on a successful verification does `MessageTransmitter` mint USDC, so the pool’s correctness ultimately depends on those external contracts.",
+      "title": "",
+      "id": "37099"
+    }
+  ]
+}

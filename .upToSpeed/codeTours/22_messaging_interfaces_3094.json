@@ -1,0 +1,169 @@
+{
+  "title": "2.2: Messaging Interfaces",
+  "id": "OxArIYTH0Q/Yr1BGK96mMfdvxm/8p2AaTb3ZFZCu4/0=",
+  "originalId": 3094,
+  "position": 3,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This tour follows a **CCIP** packet on its round-trip. Outbound: a dApp calls `IRouterClient`, the `Router` forwards it to an **On-Ramp**. Inbound: an **Off-Ramp** delivers the packet to `Router.routeMessage`, which calls the receiving application.",
+      "title": "",
+      "id": "36964"
+    },
+    {
+      "type": "highlight",
+      "description": "The low-level entry for inbound packets.  `gasForCallExactCheck` (21) is held back to confirm the downstream call used all its gas; `gasLimit` (22) caps what is forwarded; `receiver` (23) is the target contract.",
+      "file": "chains/evm/contracts/interfaces/IRouter.sol",
+      "highlight": [
+        {
+          "start": 19,
+          "end": 24
+        }
+      ],
+      "title": "",
+      "id": "36965"
+    },
+    {
+      "type": "highlight",
+      "description": "Only `OffRamps` are authorised. Any other caller triggers the `OnlyOffRamp` `revert`.",
+      "file": "chains/evm/contracts/interfaces/IRouter.sol",
+      "highlight": [
+        {
+          "start": 6,
+          "end": 8
+        }
+      ],
+      "title": "",
+      "id": "36966"
+    },
+    {
+      "type": "highlight",
+      "description": "The concrete `Router` enforces the rule by verifying `isOffRamp` before doing any work.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 165,
+          "end": 169
+        }
+      ],
+      "title": "",
+      "id": "36967"
+    },
+    {
+      "type": "highlight",
+      "description": "Support functions expose the current topology: `getOnRamp` for egress and `isOffRamp` for ingress.",
+      "file": "chains/evm/contracts/interfaces/IRouter.sol",
+      "highlight": [
+        {
+          "start": 29,
+          "end": 36
+        }
+      ],
+      "title": "",
+      "id": "36968"
+    },
+    {
+      "type": "highlight",
+      "description": "Application contracts implement `ccipReceive`. **Router** calls it; if it reverts both message and token movement roll back and the message is marked **FAILED**.",
+      "file": "chains/evm/contracts/interfaces/IAny2EVMMessageReceiver.sol",
+      "highlight": [
+        {
+          "start": 8,
+          "end": 14
+        }
+      ],
+      "title": "",
+      "id": "36969"
+    },
+    {
+      "type": "highlight",
+      "description": "Inside `routeMessage` the `Router` **ABI-encodes** `ccipReceive` and executes it through `CallWithExactGas`, capping return data, then emits `MessageExecuted`.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 171,
+          "end": 176
+        }
+      ],
+      "title": "",
+      "id": "36970"
+    },
+    {
+      "type": "highlight",
+      "description": "After proof verification an `OffRamp` finalises token handling and hands control to the `Router`, injecting the packet with the same gas limit the `DON` specified.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 640,
+          "end": 645
+        }
+      ],
+      "title": "",
+      "id": "36971"
+    },
+    {
+      "type": "textOnly",
+      "description": "Outbound traffic is driven by `IRouterClient`.  `dApps` link against this lighter interface, never the `Router` directly.",
+      "title": "",
+      "id": "36972"
+    },
+    {
+      "type": "highlight",
+      "description": "Early validation errors – `UnsupportedDestinationChain`, `InsufficientFeeTokenAmount`, `InvalidMsgValue` – protect callers.  `isChainSupported` lets UIs grey-out unsupported chains.",
+      "file": "chains/evm/contracts/interfaces/IRouterClient.sol",
+      "highlight": [
+        {
+          "start": 7,
+          "end": 17
+        }
+      ],
+      "title": "",
+      "id": "36973"
+    },
+    {
+      "type": "highlight",
+      "description": "`getFee` quotes the exact amount required for delivery, denominated in the chosen fee token.",
+      "file": "chains/evm/contracts/interfaces/IRouterClient.sol",
+      "highlight": [
+        {
+          "start": 23,
+          "end": 26
+        }
+      ],
+      "title": "",
+      "id": "36974"
+    },
+    {
+      "type": "highlight",
+      "description": "`ccipSend` is the single send call a dApp executes; it returns a messageId that can be tracked cross-chain.",
+      "file": "chains/evm/contracts/interfaces/IRouterClient.sol",
+      "highlight": [
+        {
+          "start": 35,
+          "end": 38
+        }
+      ],
+      "title": "",
+      "id": "36975"
+    },
+    {
+      "type": "highlight",
+      "description": "`Router.ccipSend` validates support, collects or wraps the fee, then forwards the packet to the configured `On-Ramp`.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 112,
+          "end": 118
+        }
+      ],
+      "title": "",
+      "id": "36976"
+    },
+    {
+      "type": "textOnly",
+      "description": "**End-to-end flow:**\n1 dApp → `IRouterClient.ccipSend` → `Router.ccipSend` → On-Ramp.\n2 DON relays → Off-Ramp.\n3 Off-Ramp → `Router.routeMessage` → `receiver.ccipReceive`.\nErrors at any stage revert token transfers and mark the message FAILED.",
+      "title": "",
+      "id": "36977"
+    }
+  ]
+}

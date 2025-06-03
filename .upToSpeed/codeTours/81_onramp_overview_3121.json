@@ -1,0 +1,124 @@
+{
+  "title": "8.1: OnRamp: Overview",
+  "id": "8A8K42PYGywUO+84d4bA/CCY7PKwoE+jjmtZmAqgLSc=",
+  "originalId": 3121,
+  "position": 41,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Begin with a fly-over of the **on-ramp component**.  We will only note where things live and what each file claims to do; the next tours will dive into behaviour.",
+      "title": "",
+      "id": "37237"
+    },
+    {
+      "type": "highlight",
+      "description": "The header reveals several key facts:\n- SPDX licence & compiler pragma sit at the top.\n- A long list of imports hints at many collaborators.\n- Line 30 shows the contract declaration – `OnRamp` implements `IEVM2AnyOnRampClient`, `ITypeAndVersion`, and `Ownable2StepMsgSender`.\n- The brief comment at lines 27–29 states that `OnRamp` “handles lane-specific fee logic” and is upgraded in tandem with the Off-ramp.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 1,
+          "end": 33
+        }
+      ],
+      "title": "",
+      "id": "37238"
+    },
+    {
+      "type": "highlight",
+      "description": "A loud banner marks the start of the **Messaging** section – everything message-related is grouped below this point.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 147,
+          "end": 152
+        }
+      ],
+      "title": "",
+      "id": "37239"
+    },
+    {
+      "type": "highlight",
+      "description": "Next banner: `Config` – static and dynamic configuration helpers live here.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 315,
+          "end": 318
+        }
+      ],
+      "title": "",
+      "id": "37240"
+    },
+    {
+      "type": "highlight",
+      "description": "The `Allowlist` section follows \t6 dedicated to governing which senders may use the lane.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 429,
+          "end": 432
+        }
+      ],
+      "title": "",
+      "id": "37241"
+    },
+    {
+      "type": "highlight",
+      "description": "Then comes **Tokens and pools** – token locking / burning and pool look-ups.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 479,
+          "end": 482
+        }
+      ],
+      "title": "",
+      "id": "37242"
+    },
+    {
+      "type": "highlight",
+      "description": "Finally the **Fees** banner closes the contract.\n\nThose five banners are the roadmap for every future deep-dive.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 495,
+          "end": 498
+        }
+      ],
+      "title": "",
+      "id": "37243"
+    },
+    {
+      "type": "highlight",
+      "description": "`OnRampWithMessageTransformer` is a slim subclass – line 10 shows it inherits directly from `OnRamp` and introduces one new state variable.",
+      "file": "chains/evm/contracts/onRamp/OnRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 8,
+          "end": 12
+        }
+      ],
+      "title": "",
+      "id": "37244"
+    },
+    {
+      "type": "highlight",
+      "description": "Its only behavioural change is the override of `_postProcessMessage`, which forwards every outbound message to an external transformer contract before returning the transformed result.",
+      "file": "chains/evm/contracts/onRamp/OnRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 44,
+          "end": 55
+        }
+      ],
+      "title": "",
+      "id": "37245"
+    },
+    {
+      "type": "textOnly",
+      "description": "Recap: the component is centred on a single, thematically-partitioned `OnRamp` contract, plus one decorator that injects a message-transformation hook.  With the map in mind we can now explore each section in detail.",
+      "title": "",
+      "id": "37246"
+    }
+  ]
+}

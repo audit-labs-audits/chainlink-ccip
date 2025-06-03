@@ -1,0 +1,274 @@
+{
+  "title": "7.4: FeeQuoter: Fee Calculation Engine",
+  "id": "kvMh8e9oe+UWNFPB99hkud9dT3DwqPXrTeot2g1XsEY=",
+  "originalId": 3119,
+  "position": 38,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "We’ll trace how `FeeQuoter’s getValidatedFee` computes the `feeTokenAmount` from a message. We’ll examine: validations, premium fee, data availability cost, calldata cost, gas aggregation, and final conversion.",
+      "title": "",
+      "id": "37213"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "chains/evm/contracts/FeeQuoter.sol"
+      ],
+      "description": "`FeeQuoter.sol` implements `getValidatedFee` and helpers to quote message fees in smallest `feeToken` units.",
+      "title": "",
+      "id": "37214"
+    },
+    {
+      "type": "highlight",
+      "description": "`FEE_BASE_DECIMALS` = 36 and `KEYSTONE_PRICE_DECIMALS` = 18 define how USD values and price feeds are scaled across calculations.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 170,
+          "end": 174
+        }
+      ],
+      "title": "",
+      "id": "37215"
+    },
+    {
+      "type": "highlight",
+      "description": "`DestChainConfig` includes `gasMultiplierWeiPerEth` (1e18-based) to scale total gas costs by a chain-specific multiplier.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 117,
+          "end": 123
+        }
+      ],
+      "title": "",
+      "id": "37216"
+    },
+    {
+      "type": "highlight",
+      "description": "`getValidatedFee` starts by loading `destChainConfig` and gating that the `chain` is enabled and `feeToken` is supported.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 558,
+          "end": 564
+        }
+      ],
+      "title": "",
+      "id": "37217"
+    },
+    {
+      "type": "highlight",
+      "description": "It validates `message size` & `gasLimit`, then retrieves `feeTokenPrice` (USD scaled 1e18) and `gasPriceValue` (USD per gas unit scaled 1e18).",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 566,
+          "end": 572
+        }
+      ],
+      "title": "",
+      "id": "37218"
+    },
+    {
+      "type": "highlight",
+      "description": "If token transfers exist, it calls `_getTokenTransferCost` to accumulate per-transfer USD fees (`18-decimals`), `tokenTransferGas`, and `bytes overhead`.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 577,
+          "end": 584
+        }
+      ],
+      "title": "",
+      "id": "37219"
+    },
+    {
+      "type": "highlight",
+      "description": "Otherwise, for message-only, it applies a flat `networkFeeUSDCents` (2-decimals) converted to USD with 18 decimals.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 589,
+          "end": 592
+        }
+      ],
+      "title": "",
+      "id": "37220"
+    },
+    {
+      "type": "highlight",
+      "description": "The premium fee is scaled to 36 decimals by multiplying with `s_premiumMultiplierWeiPerEth[feeToken]`, accommodating token-specific premiums.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 593,
+          "end": 596
+        }
+      ],
+      "title": "",
+      "id": "37221"
+    },
+    {
+      "type": "highlight",
+      "description": "Data availability cost (36 decimals) is added for chains with `destDataAvailabilityMultiplierBps > 0`, via `_getDataAvailabilityCost`.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 600,
+          "end": 607
+        }
+      ],
+      "title": "",
+      "id": "37222"
+    },
+    {
+      "type": "highlight",
+      "description": "Calldata cost uses `destGasPerPayloadByteBase` up to a threshold, then `destGasPerPayloadByteHigh` beyond, ensuring execution gas covers extra byte costs.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 613,
+          "end": 630
+        }
+      ],
+      "title": "",
+      "id": "37223"
+    },
+    {
+      "type": "highlight",
+      "description": "Total destination chain gas = `destGasOverhead` + `tokenTransferGas` + `destCallDataCost` + `gasLimit`.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 634,
+          "end": 634
+        }
+      ],
+      "title": "",
+      "id": "37224"
+    },
+    {
+      "type": "highlight",
+      "description": "Finally, `feeTokenAmount` = (`totalGas` · `executionGasPrice` · `gasMultiplierWeiPerEth` + `premiumUSD36` + `dataAvailUSD36`) / `feeTokenPrice`.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 639,
+          "end": 643
+        }
+      ],
+      "title": "",
+      "id": "37225"
+    },
+    {
+      "type": "textOnly",
+      "description": "Next, `_getTokenTransferCost` loops over each token transfer to calculate its USD fee, gas overhead, and bytes overhead.",
+      "title": "",
+      "id": "37226"
+    },
+    {
+      "type": "highlight",
+      "description": "`_getTokenTransferCost` signature and loop: iterates `Client.EVMTokenAmount[]` `tokenAmounts` to accumulate costs.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 692,
+          "end": 699
+        }
+      ],
+      "title": "",
+      "id": "37227"
+    },
+    {
+      "type": "highlight",
+      "description": "If no custom config, add `defaultTokenFeeUSDCents·1e16` to USD fee, `defaultTokenDestGasOverhead` to gas, and `Pool.CCIP_LOCK_OR_BURN_V1_RET_BYTES` to bytes overhead.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 706,
+          "end": 711
+        }
+      ],
+      "title": "",
+      "id": "37228"
+    },
+    {
+      "type": "highlight",
+      "description": "For enabled configs with `deciBps > 0`, compute token USD value via `tokenPrice._calcUSDValueFromTokenAmount` and apply `deciBps/1e5` to get bpsFeeUSDWei.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 717,
+          "end": 727
+        }
+      ],
+      "title": "",
+      "id": "37229"
+    },
+    {
+      "type": "highlight",
+      "description": "Always add `transferFeeConfig.destGasOverhead` and `destBytesOverhead`, then clamp `bpsFeeUSDWei` within [`minFeeUSDCents·1e16`, `maxFeeUSDCents·1e16`].",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 730,
+          "end": 737
+        }
+      ],
+      "title": "",
+      "id": "37230"
+    },
+    {
+      "type": "textOnly",
+      "description": "`_getTokenTransferCost` returns: total `tokenTransferFeeUSDWei` (18-decimals), `tokenTransferGas`, `tokenTransferBytesOverhead`.",
+      "title": "",
+      "id": "37231"
+    },
+    {
+      "type": "textOnly",
+      "description": "Next, `_getDataAvailabilityCost` computes storage gas for rollups and converts to USD 36-decimals.",
+      "title": "",
+      "id": "37232"
+    },
+    {
+      "type": "highlight",
+      "description": "Compute `dataAvailabilityLengthBytes` = `fixed fields` + `messageDataLength` + `per-token fixed bytes` + `tokenTransferBytesOverhead`.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 803,
+          "end": 807
+        }
+      ],
+      "title": "",
+      "id": "37233"
+    },
+    {
+      "type": "highlight",
+      "description": "`dataAvailabilityGas` = `length`·`destGasPerDataAvailabilityByte` + `destDataAvailabilityOverheadGas`. Then `USD36` = `gas`·`gasPrice(1e18)`·`multiplierBps`·`1e14`.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 808,
+          "end": 815
+        }
+      ],
+      "title": "",
+      "id": "37234"
+    },
+    {
+      "type": "textOnly",
+      "description": "In summary, `getValidatedFee` aggregates: gas cost (scaled by `executionGasPrice` and `gasMultiplierWeiPerEth`), premium fee (36-decimals), and data availability cost (36-decimals), then divides by `feeTokenPrice` (18-decimals) to yield `feeTokenAmount`.",
+      "title": "",
+      "id": "37235"
+    },
+    {
+      "type": "textOnly",
+      "description": "With this breakdown you can reproduce or audit `FeeQuoter`’s fee calculations end-to-end.",
+      "title": "",
+      "id": "37236"
+    }
+  ]
+}

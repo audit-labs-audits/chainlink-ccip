@@ -1,0 +1,117 @@
+{
+  "title": "7.1: FeeQuoter: Overview",
+  "id": "dFydbuehu3ajr06cM0C6WV+NfAFtcZy59kJO8NV6/V4=",
+  "originalId": 3116,
+  "position": 35,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This tour gives you the lay-of-the-land inside `FeeQuoter`.  In a few minutes you will know its mission, where the core data lives, and which public helpers the rest of CCIP relies on.",
+      "title": "",
+      "id": "37151"
+    },
+    {
+      "type": "highlight",
+      "description": "The very first lines import a blend of:\n\n- External interfaces (`IERC165`, `IReceiver`, …)\n- Chainlink Keystone libraries\n- Project-local helpers (`Client`, `Internal`, `Pool`)\n\nThat mix hints that **FeeQuoter** sits at the intersection of on-chain feeds and cross-chain messaging.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 23
+        }
+      ],
+      "title": "",
+      "id": "37152"
+    },
+    {
+      "type": "highlight",
+      "description": "Lines 24-33 spell out the contract’s three headline duties: keep `USD` gas prices per destination chain, track `token→USD` prices, and orchestrate `per-chain fee maths`.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 24,
+          "end": 33
+        }
+      ],
+      "title": "",
+      "id": "37153"
+    },
+    {
+      "type": "highlight",
+      "description": "Scanning the errors & events (34-68) reveals the **validation perimeter**: unsupported tokens, stale prices, bad `extraArgs`, mis-configured chains, plus emitters for every price or config change.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 34,
+          "end": 68
+        }
+      ],
+      "title": "",
+      "id": "37154"
+    },
+    {
+      "type": "textOnly",
+      "description": "Key structs you will meet in later dives:\n- `TokenPriceFeedConfig`\n- `StaticConfig`\n- `DestChainConfig`\n- `TokenTransferFeeConfig`",
+      "title": "",
+      "id": "37155"
+    },
+    {
+      "type": "highlight",
+      "description": "Constants & storage snapshot:  \n- Two mappings (`185-194`) pack {value,timestamp} into one word for gas-price and token-price.  \n- `s_feeTokens` (215) is the whitelist of acceptable payment tokens.  \n- Three immutables (`210-217`) hard-cap max fees, record **LINK**’s address and set price-staleness limits.  ",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 170,
+          "end": 218
+        }
+      ],
+      "title": "",
+      "id": "37156"
+    },
+    {
+      "type": "highlight",
+      "description": "`getTokenPrice()` — the read-side helper that returns the freshest price, falling back to a live data-feed when the cached value is stale.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 250,
+          "end": 272
+        }
+      ],
+      "title": "",
+      "id": "37157"
+    },
+    {
+      "type": "highlight",
+      "description": "`getValidatedFee()` — the **work-horse** queried by senders.  It validates the message, looks up prices, and returns the payable fee in the chosen `feeToken`.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 556,
+          "end": 569
+        }
+      ],
+      "title": "",
+      "id": "37158"
+    },
+    {
+      "type": "highlight",
+      "description": "`processMessageArgs()` — post-fee helper: converts any paid token into `LINK`, normalises extraArgs for the destination family and enforces the per-message fee ceiling.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 1087,
+          "end": 1117
+        }
+      ],
+      "title": "",
+      "id": "37159"
+    },
+    {
+      "type": "textOnly",
+      "description": "You now know what `FeeQuoter` promises, where its critical state resides, and which three public helpers power the rest of `CCIP`.  The next tours will unpack the **structs** and calculation routines in depth.",
+      "title": "",
+      "id": "37160"
+    }
+  ]
+}

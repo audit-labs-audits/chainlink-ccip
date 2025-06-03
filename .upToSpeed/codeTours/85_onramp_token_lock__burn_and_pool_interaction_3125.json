@@ -1,0 +1,98 @@
+{
+  "title": "8.5: OnRamp: Token Lock / Burn & Pool Interaction",
+  "id": "3nYPqwTMwivPhbXn205kwlzUUzJzwdVUHnSSGpHINh0=",
+  "originalId": 3125,
+  "position": 45,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Follow the path a user’s **ERC-20** tokens take when a cross-chain message is sent.  The key hand-off happens inside `OnRamp._lockOrBurnSingleToken`; we will step through that helper, then peek at the registry function it relies on.",
+      "title": "",
+      "id": "37324"
+    },
+    {
+      "type": "highlight",
+      "description": "The function opens with a guard and nothing else: if the user tries to send an amount of zero, the transaction reverts immediately (`285-286`).  Rejecting **no-op transfers** keeps later accounting and event logic sound.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 274,
+          "end": 286
+        }
+      ],
+      "title": "",
+      "id": "37325"
+    },
+    {
+      "type": "highlight",
+      "description": "A pool that will take custody of the token is discovered next (287). The lookup is token-centric—`getPoolBySourceToken` asks a registry for the pool address. Once found, the code enforces that the pool self-declares **CCIP V1** compatibility via **ERC-165** (291-292). Failing either test makes the token \"unsupported\" and the whole send reverts.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 287,
+          "end": 293
+        }
+      ],
+      "title": "",
+      "id": "37326"
+    },
+    {
+      "type": "highlight",
+      "description": "With a valid pool, `OnRamp` constructs the `Pool.LockOrBurnInV1` struct. These fields will be passed along to the pool:\n\n- `receiver` — ABI-encoded identifier on the destination chain\n- `remoteChainSelector` — numeric ID of the destination chain\n- `originalSender` — the externally owned account (EOA) that initiated the send\n- `amount` — the token quantity to lock or burn\n- `localToken` — the ERC-20 token being removed from the user",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 295,
+          "end": 303
+        }
+      ],
+      "title": "",
+      "id": "37327"
+    },
+    {
+      "type": "highlight",
+      "description": "The shared `Pool` library defines the `struct` layout, making the encoding unambiguous across every pool implementation.",
+      "file": "chains/evm/contracts/libraries/Pool.sol",
+      "highlight": [
+        {
+          "start": 19,
+          "end": 25
+        }
+      ],
+      "title": "",
+      "id": "37328"
+    },
+    {
+      "type": "highlight",
+      "description": "Right after the pool returns its data, OnRamp stores it as-is.  A comment (305) points out that **all pool-specific validation is intentionally deferred to `FeeQuoter`**, keeping the OnRamp logic generic and upgrade-friendly.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 305,
+          "end": 307
+        }
+      ],
+      "title": "",
+      "id": "37329"
+    },
+    {
+      "type": "highlight",
+      "description": "The lookup used earlier simply asks the on-chain `TokenAdminRegistry` to map a local token address to its pool. This indirection lets operators swap pools or add new tokens without redeploying the `OnRamp`.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 483,
+          "end": 486
+        }
+      ],
+      "title": "",
+      "id": "37330"
+    },
+    {
+      "type": "textOnly",
+      "description": "Tokens therefore leave the user’s wallet only after a `zero-amount check`, a `registry-mediated pool discovery`, and an `ERC-165 compatibility test`. The actual lock or burn is executed by the `pool contract`, while any pool-family quirks are validated later by `FeeQuoter`.",
+      "title": "",
+      "id": "37331"
+    }
+  ]
+}

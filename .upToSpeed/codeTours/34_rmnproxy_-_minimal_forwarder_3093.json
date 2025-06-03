@@ -1,0 +1,150 @@
+{
+  "title": "3.4: RMNProxy – Minimal Forwarder",
+  "id": "Rvs7GAQjRgOEFXVhahxga8dxMCInle/LrldaKWXWXJE=",
+  "originalId": 3093,
+  "position": 15,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Many **CCIP** contracts must ask the **Risk Management Network (RMN, ex-ARM)** whether a chain is `cursed`. Instead of embedding a mutable **RMN** address in every contract, the system introduces one tiny forwarder – `RMNProxy` – that stores a single pointer and forwards every call. The next screens walk through its design and show how the rest of the protocol reads through it.",
+      "title": "",
+      "id": "37004"
+    },
+    {
+      "type": "highlight",
+      "description": "The proxy has just one piece of state:\n\n- Line 22 declares `s_arm` – the current RMN implementation.\n- Lines 24–28 run the constructor, which immediately delegates to `setARM` so the slot is never left un-initialised.",
+      "file": "chains/evm/contracts/rmn/RMNProxy.sol",
+      "highlight": [
+        {
+          "start": 18,
+          "end": 28
+        }
+      ],
+      "title": "",
+      "id": "37005"
+    },
+    {
+      "type": "highlight",
+      "description": "`setARM` (lines 32-38) is protected by **onlyOwner**, meaning only **CCIP governance** can rotate `RMN`. Line 35 rejects the zero address, and line 37 emits `ARMSet` so every change is on-chain observable.",
+      "file": "chains/evm/contracts/rmn/RMNProxy.sol",
+      "highlight": [
+        {
+          "start": 30,
+          "end": 38
+        }
+      ],
+      "title": "",
+      "id": "37006"
+    },
+    {
+      "type": "highlight",
+      "description": "The fallback turns `RMNProxy` into a payable-agnostic forwarder.  **First safeguard:** `line 58` checks `extcodesize(arm)` and reverts if the pointer is not a contract, preventing silent mis-configuration.",
+      "file": "chains/evm/contracts/rmn/RMNProxy.sol",
+      "highlight": [
+        {
+          "start": 52,
+          "end": 59
+        }
+      ],
+      "title": "",
+      "id": "37007"
+    },
+    {
+      "type": "highlight",
+      "description": "Lines 65-74 copy `calldata`, forward the call with full `gas` and zero `value`, copy `returndata`, then bubble up `success` or `revert` unchanged.  With no explicit selectors declared, the proxy’s `ABI` remains identical to `IRMN` – future additions need no proxy changes.",
+      "file": "chains/evm/contracts/rmn/RMNProxy.sol",
+      "highlight": [
+        {
+          "start": 65,
+          "end": 74
+        }
+      ],
+      "title": "",
+      "id": "37008"
+    },
+    {
+      "type": "highlight",
+      "description": "Down-stream contracts store the `proxy`, not `RMN` itself.  `Router`’s **immutable** `i_armProxy` is set at deployment (line 58).",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 56,
+          "end": 60
+        }
+      ],
+      "title": "",
+      "id": "37009"
+    },
+    {
+      "type": "highlight",
+      "description": "Locate the `whenNotCursed` modifier in `Router.sol`. It invokes `isCursed()` on the current `RMN` implementation via the proxy address (`i_armProxy`). If that call returns true, the modifier reverts with `BadARMSignal()`. Routing this check through `RMNProxy` ensures that any paused or “cursed” state set by governance applies consistently across the system, even after upgrading the underlying logic.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 296,
+          "end": 299
+        }
+      ],
+      "title": "",
+      "id": "37010"
+    },
+    {
+      "type": "highlight",
+      "description": "Token pools follow the same indirection with immutable `i_rmnProxy`.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 106,
+          "end": 110
+        }
+      ],
+      "title": "",
+      "id": "37011"
+    },
+    {
+      "type": "highlight",
+      "description": "During critical validation (`lock/burn` and `release/mint`) they ask `IRMN(i_rmnProxy).isCursed(...)` – lines 280-283.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 280,
+          "end": 283
+        }
+      ],
+      "title": "",
+      "id": "37012"
+    },
+    {
+      "type": "highlight",
+      "description": "`OnRamp` checks the *remote* chain status through its own proxy instance.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 506,
+          "end": 510
+        }
+      ],
+      "title": "",
+      "id": "37013"
+    },
+    {
+      "type": "highlight",
+      "description": "**OffRamp** mirrors the pattern; before executing a message batch it verifies `i_rmnRemote.isCursed(...)`.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 376,
+          "end": 381
+        }
+      ],
+      "title": "",
+      "id": "37014"
+    },
+    {
+      "type": "textOnly",
+      "description": "Routing every `RMN` call through `RMNProxy` yields three wins:\n\n- **Gas** – only one storage slot for the entire protocol.\n- **Governance** – a single transaction can hot-swap or upgrade `RMN`.\n- **Safety** – the assembly forwarder keeps the `ABI` unchanged while guarding against mis-pointing. That minimal design future-proofs all `CCIP` contracts.",
+      "title": "",
+      "id": "37015"
+    }
+  ]
+}

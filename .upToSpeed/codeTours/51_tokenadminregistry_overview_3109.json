@@ -1,0 +1,130 @@
+{
+  "title": "5.1: TokenAdminRegistry: Overview",
+  "id": "KB4IiNzs3Kb5PdeFD6CvR+nB4W2vGu5NmkkTCCGPd/A=",
+  "originalId": 3109,
+  "position": 26,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "We will take a quick aerial tour of the `TokenAdminRegistry` sub-system, meeting four contracts and the roles each one plays.",
+      "title": "",
+      "id": "37114"
+    },
+    {
+      "type": "highlight",
+      "description": "TokenAdminRegistry is the nucleus.  Its header declares ownership helpers and, at lines 35-39, the TokenConfig struct that every other component ultimately updates: `administrator`, `pendingAdministrator`, and `tokenPool`.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 1,
+          "end": 40
+        }
+      ],
+      "title": "",
+      "id": "37115"
+    },
+    {
+      "type": "textOnly",
+      "description": "Three satellite helpers orbit the registry:\n• `RegistryModuleOwnerCustom` – lets a token’s existing owner or admin enrol itself.\n• `TokenPoolFactory` – one-click deployment of a token *and* a pool, then wiring both into the registry.\n• `FactoryBurnMintERC20` – a minimalist **ERC-20** that exposes hooks the factory needs (mint, burn, getCCIPAdmin).",
+      "title": "",
+      "id": "37116"
+    },
+    {
+      "type": "highlight",
+      "description": "Self-serve registration lives here.  `registerAdminViaOwner` (lines 45-49) fetches the token’s `owner()` and passes it through to the registry.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/RegistryModuleOwnerCustom.sol",
+      "highlight": [
+        {
+          "start": 42,
+          "end": 50
+        }
+      ],
+      "title": "",
+      "id": "37117"
+    },
+    {
+      "type": "highlight",
+      "description": "The private helper enforces *self*-registration: if the supplied admin is not the caller it reverts (line 70).  Only bona-fide owners can add themselves.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/RegistryModuleOwnerCustom.sol",
+      "highlight": [
+        {
+          "start": 69,
+          "end": 75
+        }
+      ],
+      "title": "",
+      "id": "37118"
+    },
+    {
+      "type": "highlight",
+      "description": "Automated path – `deployTokenAndTokenPool` does four things in one transaction: \n1. deterministic token deployment (line 115),\n2. pool deployment (line 118),\n3. grants the pool mint/burn power on that token (line 121),\n4. hands control to a registry-wiring helper (line 124).",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 103,
+          "end": 129
+        }
+      ],
+      "title": "",
+      "id": "37119"
+    },
+    {
+      "type": "highlight",
+      "description": "That helper, `_setTokenPoolInTokenAdminRegistry`, walks the registry through every step: self-register, accept admin, set the pool, then transfer admin back to the user.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 271,
+          "end": 278
+        }
+      ],
+      "title": "",
+      "id": "37120"
+    },
+    {
+      "type": "highlight",
+      "description": "FactoryBurnMintERC20 is purpose-built for factories: events announcing role changes and the `s_ccipAdmin` field the registry can later consult.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/FactoryBurnMintERC20.sol",
+      "highlight": [
+        {
+          "start": 20,
+          "end": 34
+        }
+      ],
+      "title": "",
+      "id": "37121"
+    },
+    {
+      "type": "highlight",
+      "description": "`grantMintAndBurnRoles` lets the factory hand both privileges to the newly created pool in a single cheap call.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/FactoryBurnMintERC20.sol",
+      "highlight": [
+        {
+          "start": 169,
+          "end": 176
+        }
+      ],
+      "title": "",
+      "id": "37122"
+    },
+    {
+      "type": "highlight",
+      "description": "External callers (including the registry module) can later discover the designated administrator via `getCCIPAdmin`.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/FactoryBurnMintERC20.sol",
+      "highlight": [
+        {
+          "start": 229,
+          "end": 233
+        }
+      ],
+      "title": "",
+      "id": "37123"
+    },
+    {
+      "type": "textOnly",
+      "description": "**Files touched in this overview:**\n1. `tokenAdminRegistry/TokenAdminRegistry.sol`\n2. `tokenAdminRegistry/RegistryModuleOwnerCustom.sol`\n3. `tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol`\n4. `tokenAdminRegistry/TokenPoolFactory/FactoryBurnMintERC20.sol`\nFuture tours will dive deeper into each, building on these landmarks.",
+      "title": "",
+      "id": "37124"
+    }
+  ]
+}

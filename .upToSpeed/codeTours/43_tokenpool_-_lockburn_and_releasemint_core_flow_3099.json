@@ -1,0 +1,124 @@
+{
+  "title": "4.3: TokenPool – Lock/Burn & Release/Mint Core Flow",
+  "id": "V07Bp1KbQUbqv7pAK9oWiJ77AVlWlQ4HNG2j+rw8wIA=",
+  "originalId": 3099,
+  "position": 18,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Follow the journey of a cross-chain transfer through `TokenPool`: from the public wrappers, through layered validation, down to the abstract hooks that each concrete pool implements, and finally to the events that make every movement traceable.",
+      "title": "",
+      "id": "37588"
+    },
+    {
+      "type": "highlight",
+      "description": "lockOrBurn() is the outward-facing entry point.\n\n- **Line 207:** calls `_validateLockOrBurn`, rejecting any unauthorized or rate-limited attempt.\n- **Line 209:** delegates the actual asset manipulation to `_lockOrBurn`.\n- **Lines 211–216:** emits `LockedOrBurned` so observers can audit the action.\n- **Lines 218–221:** returns a struct describing the remote token and local decimals that downstream components need.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 202,
+          "end": 222
+        }
+      ],
+      "title": "",
+      "id": "37589"
+    },
+    {
+      "type": "highlight",
+      "description": "`_lockOrBurn()` is declared virtual and left empty. Each pool subclass overrides this hook to implement its own burn, lock or other token-specific mechanics.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 224,
+          "end": 229
+        }
+      ],
+      "title": "",
+      "id": "37590"
+    },
+    {
+      "type": "highlight",
+      "description": "releaseOrMint() handles the inbound leg.\n\n- 241 – calls `_validateReleaseOrMint()`.\n- 243–245 – converts the remote amount into local decimals via `_calculateLocalAmount()`; rounding down protects against over-minting.\n- 247 – performs the asset movement with `_releaseOrMint()`.\n- 249–255 – emits `ReleasedOrMinted`.\n- 257 – returns the actual local amount released/minted.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 235,
+          "end": 258
+        }
+      ],
+      "title": "",
+      "id": "37591"
+    },
+    {
+      "type": "highlight",
+      "description": "Like its outbound counterpart, `_releaseOrMint()` is an abstract hook that subclasses must implement to mint, unlock escrow, or perform another release mechanism.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 260,
+          "end": 263
+        }
+      ],
+      "title": "",
+      "id": "37592"
+    },
+    {
+      "type": "highlight",
+      "description": "`_validateLockOrBurn()` layers several defenses:\n\n1. **Line 281**: token must match this pool.\n2. **Line 282**: RMN must not mark the destination chain as cursed.\n3. **Line 283**: optional allow-list gate on the original sender.\n4. **Line 285**: only the Router-registered on-ramp may call.\n5. **Line 286**: outbound rate-limit capacity is consumed to prevent floods.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 268,
+          "end": 287
+        }
+      ],
+      "title": "",
+      "id": "37593"
+    },
+    {
+      "type": "highlight",
+      "description": "_validateReleaseOrMint() repeats those checks and adds two more checks:\n- **Lines 305–308**: validates that `sourcePoolAddress` is one of the configured remote pools.\n- **Line 310**: consumes inbound rate-limit capacity, throttling bursts of incoming mints.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 289,
+          "end": 311
+        }
+      ],
+      "title": "",
+      "id": "37594"
+    },
+    {
+      "type": "highlight",
+      "description": "`calculateLocalAmount()` safely reconciles differing decimals:\n\n- **Equal decimals**: direct pass-through (lines 352–354)\n- **Remote > local**: division path (lines 355–363) with a `decimalsDiff <= 77` guard; downward rounding avoids over-minting\n- **Remote < local**: multiplication path (lines 365–373) with a mirrored overflow check (`diffDecimals <= 77` and product fits in `uint256`)\n\nEither branch reverts with `OverflowDetected` on overflow.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 351,
+          "end": 374
+        }
+      ],
+      "title": "",
+      "id": "37595"
+    },
+    {
+      "type": "highlight",
+      "description": "Every successful transfer publishes an immutable audit record:\n\n- **LockedOrBurned**(remoteChainSelector, token, sender, amount)\n- **ReleasedOrMinted**(remoteChainSelector, token, sender, recipient, amount)",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 62,
+          "end": 65
+        }
+      ],
+      "title": "",
+      "id": "37596"
+    },
+    {
+      "type": "textOnly",
+      "description": "With these pieces you now know where security checks live, how subclasses inject token-specific logic, how decimal differences are handled, and which events external auditors can rely on for a complete trail.",
+      "title": "",
+      "id": "37597"
+    }
+  ]
+}

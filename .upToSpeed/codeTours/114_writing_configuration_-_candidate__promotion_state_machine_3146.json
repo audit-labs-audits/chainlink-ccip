@@ -1,0 +1,98 @@
+{
+  "title": "11.4: Writing Configuration – Candidate / Promotion State Machine",
+  "id": "A9pibllqAZO17ZfWQGMcMzSGl6lMVzHAn8DsEceCLcM=",
+  "originalId": 3146,
+  "position": 66,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This walkthrough shows how `CCIPHome` stages, promotes, and revokes configuration objects.\n\n- First, refresh the on-chain state-machine.\n- Next, inspect `setCandidate` – from validation to digest creation.\n- Then, decode `_calculateConfigDigest` – why the **PREFIX** exists and how versioning makes each digest unique.\n- After that, examine `revokeCandidate` and `promoteCandidateAndRevokeActive` – focusing on the `XOR` index flip and emitted events.\n- Finally, summarise what each state allows or forbids.",
+      "title": "",
+      "id": "37479"
+    },
+    {
+      "type": "highlight",
+      "description": "The contract comment doubles as an executable specification.\n\n- Lines 20–30 name the four states; the two-element array in brackets records whether an active (first bit) or candidate (second bit) digest is present.\n- Lines 32–41 enumerate every legal transition.\n- Lines 51–66 redraw the same information as an ASCII diagram.\n\nKeep this model in mind while we read the code that enforces it.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 16,
+          "end": 67
+        }
+      ],
+      "title": "",
+      "id": "37480"
+    },
+    {
+      "type": "highlight",
+      "description": "setCandidate begins the \"stage\" part of the blue/green deployment lifecycle.\n1. `_onlySelfCall()` (339) guarantees the registry proxy is the only external entry-point.\n2. `_validateConfig(config)` (340-341) performs deep structural checks: chain selector present, node counts, fault-tolerance maths, readers in registry, etc.\n3. The stored candidate digest is fetched (342-343) and must equal `digestToOverwrite` (344-346); this prevents accidental or out-of-date overwrites.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 330,
+          "end": 344
+        }
+      ],
+      "title": "",
+      "id": "37481"
+    },
+    {
+      "type": "highlight",
+      "description": "\n\nIf an old candidate existed, the contract emits `CandidateConfigRevoked` (349-351) before replacing it.\nNext:\n- A new monotonically-increasing version is minted (353).\n- `_calculateConfigDigest` (354-355) derives a unique 32-byte identifier – details on the next slide.\n- The `VersionedConfig` at the **candidate index** is updated in-place (356-359); only one storage slot changes when overwriting.\n- Finally, off-chain listeners learn of the new candidate via `ConfigSet` (361-362).\n",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 348,
+          "end": 361
+        }
+      ],
+      "title": "",
+      "id": "37482"
+    },
+    {
+      "type": "highlight",
+      "description": "\n_calculateConfigDigest packs provenance and versioning into the hash.\n\n- The high-order 16 bits are forced to `PREFIX` (lines 434–436) — all CCIPHome digests share this family marker.\n- The remaining 240 bits come from a `keccak256` hash (lines 437–441) over:\n  - A domain separator: `\"EVM\"`, current `chainid`, contract address.\n  - Logical identity: `donId`, `pluginType`.\n  - The ever-increasing `version`.\n  - The encoded config bytes.\n- Masking with `~PREFIX_MASK` (line 442) keeps the `PREFIX` intact.\n\nTwo configs that are byte-identical but have different versions therefore yield distinct digests.\n",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 427,
+          "end": 445
+        }
+      ],
+      "title": "",
+      "id": "37483"
+    },
+    {
+      "type": "highlight",
+      "description": "\n\nrevokeCandidate deletes a staged config before it ever becomes live.\n\n- Zero digest is explicitly forbidden (372-374) to avoid erasing “nothing”.\n- Caller-supplied digest must match the stored candidate (376-379) – same optimistic-concurrency pattern as setCandidate.\n- Only the digest field is cleared (381-384); the heavy config struct remains, so rewriting costs minimal gas next time.\n- `CandidateConfigRevoked` (381-382) notifies observers.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 369,
+          "end": 385
+        }
+      ],
+      "title": "",
+      "id": "37484"
+    },
+    {
+      "type": "highlight",
+      "description": "\n\npromoteCandidateAndRevokeActive performs the blue/green swap.\n\n- Lines 398–400 block a no-op where both digests are zero.\n- Candidate and active digests are independently matched (402–410) so stale data cannot be replayed.\n- `delete activeConfig.configDigest` (412) retires the current live config.\n- `s_activeConfigIndexes[...] ^= 1` (414–415) flips the single bit that distinguishes the two in-contract storage slots: 0→1 or 1→0.\n- If an active digest was present, `ActiveConfigRevoked` is emitted (415–417), then `ConfigPromoted` is signalled (419–420).\n",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 398,
+          "end": 420
+        }
+      ],
+      "title": "",
+      "id": "37485"
+    },
+    {
+      "type": "textOnly",
+      "description": "**Allowed versus forbidden calls**\n\n- `Init` [0,0]\n  - Allowed: `setCandidate` → `Candidate`\n  - Forbidden: `promoteCandidateAndRevokeActive`, `revokeCandidate` (no digests to act on)\n\n- `Candidate` [0,1]\n  - Allowed: `setCandidate` (overwrite), `promoteCandidateAndRevokeActive` → `Active`, `revokeCandidate` → `Init`\n\n- `Active` [1,0]\n  - Allowed: `setCandidate` → `Active&Candidate`, `promoteCandidateAndRevokeActive` → `Init` (clears active)\n  - Forbidden: `revokeCandidate` (no candidate exists)\n\n- `Active&Candidate` [1,1]\n  - Allowed: `setCandidate` (overwrite candidate), `promoteCandidateAndRevokeActive` → `Active` (swap), `revokeCandidate` → `Active` (drop staged)\n\nEvery forbidden arrow is blocked by the **digest-mismatch** or **zero-digest** checks we just examined, making the comment diagram an accurate, on-chain truth.",
+      "title": "",
+      "id": "37486"
+    }
+  ]
+}

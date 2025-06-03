@@ -1,0 +1,130 @@
+{
+  "title": "11.6: Chain Configuration Management",
+  "id": "sOzxH/7Qbb541k3IAZCUwm76/AvVeXsIqdd4h9YwuBY=",
+  "originalId": 3148,
+  "position": 68,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Per-chain parameters such as the `reader peer IDs`, the `fChain fault-tolerance value`, and an `opaque configuration blob` live inside the `CCIPHome` contract.  We will follow where they are stored, how callers read them, and how the owner mutates them.",
+      "title": "",
+      "id": "37487"
+    },
+    {
+      "type": "highlight",
+      "description": "The `ChainConfig` struct is the single container for every chain.  Line 130 lists the `readers` array, (line 131) keeps the `fChain` quorum, and (line 132) leaves room for future fields in an opaque `bytes` blob.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 127,
+          "end": 133
+        }
+      ],
+      "title": "",
+      "id": "37488"
+    },
+    {
+      "type": "highlight",
+      "description": "Two storage variables back the configuration: a mapping from `selector` to `ChainConfig` and an `EnumerableSet` that keeps **all** configured selectors, giving us both random access and index-based iteration.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 159,
+          "end": 164
+        }
+      ],
+      "title": "",
+      "id": "37489"
+    },
+    {
+      "type": "highlight",
+      "description": "`getNumChainConfigurations` is a one-liner that returns the length of the `EnumerableSet` – an O(1) way for off-chain code to learn how many chains exist.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 530,
+          "end": 534
+        }
+      ],
+      "title": "",
+      "id": "37490"
+    },
+    {
+      "type": "highlight",
+      "description": "`getChainConfig` performs a direct mapping lookup for a single selector and hands the struct back unchanged.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 536,
+          "end": 543
+        }
+      ],
+      "title": "",
+      "id": "37491"
+    },
+    {
+      "type": "highlight",
+      "description": "`getAllChainConfigs` adds paging on top of the set.  Lines 550-560 compute the page boundaries, while Lines 564-568 walk the set with `at(i)` to assemble a memory array of `ChainConfigArgs`.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 545,
+          "end": 571
+        }
+      ],
+      "title": "",
+      "id": "37492"
+    },
+    {
+      "type": "textOnly",
+      "description": "Because selectors live in an `EnumerableSet`, paging is deterministic, has no gaps, and costs `O(pageSize)` regardless of how many chains were ever provisioned.",
+      "title": "",
+      "id": "37493"
+    },
+    {
+      "type": "highlight",
+      "description": "`applyChainConfigUpdates` is the single mutating entry-point. The owner supplies two arrays: selectors to remove and full `ChainConfigArgs` to add (or overwrite).",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 574,
+          "end": 583
+        }
+      ],
+      "title": "",
+      "id": "37494"
+    },
+    {
+      "type": "highlight",
+      "description": "**Removal loop**: each selector must already be present (contains check). The struct is deleted, the selector is removed from the set, and `ChainConfigRemoved` is emitted.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 583,
+          "end": 593
+        }
+      ],
+      "title": "",
+      "id": "37495"
+    },
+    {
+      "type": "highlight",
+      "description": "\n\nAddition/update loop:\n1. `_ensureInRegistry` verifies every reader P2P ID is registered.\n2. `fChain` must be strictly positive.\n3. The struct is stored and the selector is added to the set.\n4. `emit ChainConfigSet` finalises the change.\n",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 595,
+          "end": 613
+        }
+      ],
+      "title": "",
+      "id": "37496"
+    },
+    {
+      "type": "textOnly",
+      "description": "Off-chain tooling calls `applyChainConfigUpdates` to introduce new chains or adjust `fChain`. It can then poll the getters (often paginated) to confirm that the new configuration is visible to **OCR3 plugins**.",
+      "title": "",
+      "id": "37497"
+    }
+  ]
+}

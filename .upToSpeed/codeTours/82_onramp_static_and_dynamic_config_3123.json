@@ -1,0 +1,98 @@
+{
+  "title": "8.2: OnRamp: Static & Dynamic Config",
+  "id": "DQJolhK6hVy/DdVKNIILIiiABmVfYYIUnDnm1/JLHoY=",
+  "originalId": 3123,
+  "position": 42,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Everything configurable in an `OnRamp` instance lives in two **structs**: one is baked in at deployment and never changes, the other can be **hot-swapped** by the **contract owner**. We will follow both from their declaration, through storage, to the update path so you know exactly what is frozen and who can touch the rest.",
+      "title": "",
+      "id": "37247"
+    },
+    {
+      "type": "highlight",
+      "description": "`StaticConfig` is shipped in the constructor and immediately carved into immutables.\n\n- 65 – `chainSelector` ties the contract to one specific source chain.\n- 66 – `rmnRemote` is an on-chain oracle that can \"curse\" (block) a destination chain.\n- 67 – `nonceManager` is consulted each time the lane needs an ordered nonce.\n- 68 – `tokenAdminRegistry` maps any `ERC-20` to the pool that can lock/burn it.\n\nBecause each value is copied into an **immutable** variable (see next slide) none of them can ever change after deployment.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 61,
+          "end": 69
+        }
+      ],
+      "title": "",
+      "id": "37248"
+    },
+    {
+      "type": "highlight",
+      "description": "**DynamicConfig** groups everything that *can* change.\n\n- 74 – `feeQuoter` performs every fee calculation and validation.\n- 75 – `reentrancyGuardEntered` is a boolean flipped during `forwardFromRouter` to block nested calls.\n- 76 – `messageInterceptor` (optional) can inspect or veto each outbound message.\n- 77 – `feeAggregator` is where `withdrawFeeTokens` sends accumulated fees.\n- 78 – `allowlistAdmin` may manage per-chain sender allow-lists without being the contract owner.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 71,
+          "end": 79
+        }
+      ],
+      "title": "",
+      "id": "37249"
+    },
+    {
+      "type": "highlight",
+      "description": "Here the two structs touch storage.\n\n111-118: four `immutable` variables mirror `StaticConfig` — written once in the constructor and thereafter read-only.\n\n120-123: a single `DynamicConfig` slot (`s_dynamicConfig`) stores the live mutable settings, while the mapping that follows keeps per-destination router data.\n\nThis split makes it impossible to alter `StaticConfig` later while letting an owner rewrite all `DynamicConfig` fields in one cheap `SSTORE`.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 108,
+          "end": 123
+        }
+      ],
+      "title": "",
+      "id": "37250"
+    },
+    {
+      "type": "highlight",
+      "description": "The constructor wires the two configs together.\n\n131-135: sanity-checks reject zero addresses and insist the reentrancy flag starts false.\n138-141: copies `StaticConfig` fields into the immutables you just saw.\n143: calls the shared `_setDynamicConfig` logic so deploy-time and run-time validation are identical.\n144: seeds any per-chain router/allow-list settings.\n\nFrom this point `StaticConfig` is frozen; only the `DynamicConfig` pathway remains mutable.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 126,
+          "end": 145
+        }
+      ],
+      "title": "",
+      "id": "37251"
+    },
+    {
+      "type": "highlight",
+      "description": "`setDynamicConfig` is the public entry-point and is `onlyOwner`.\n\nAnyone can read config, but only the contract owner is allowed to replace the `DynamicConfig` struct.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 337,
+          "end": 343
+        }
+      ],
+      "title": "",
+      "id": "37252"
+    },
+    {
+      "type": "highlight",
+      "description": "`_setDynamicConfig` is the single mutation choke-point.\n\n349-352: rejects zero feeQuoter or feeAggregator and insists the reentrancy flag is clear.\n354: stores the new struct.\n356-363: emits `ConfigSet`, bundling the immutable `StaticConfig` with the brand-new `DynamicConfig` so every update is observable on-chain and off-chain.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 345,
+          "end": 365
+        }
+      ],
+      "title": "",
+      "id": "37253"
+    },
+    {
+      "type": "textOnly",
+      "description": "<text>\n\n**Key take-aways**\n- StaticConfig fields are copied into `immutable` storage → **never change**.\n- DynamicConfig lives in `s_dynamicConfig` → **owner can overwrite the entire struct**; each overwrite is validated and logged.\n- `allowlistAdmin` has a narrow delegated power: it can update sender allow-lists, nothing else.\n\nThis division tells you exactly what behaviour is guaranteed stable after deployment and who can alter the parts that are not.\n</text>",
+      "title": "",
+      "id": "37254"
+    }
+  ]
+}

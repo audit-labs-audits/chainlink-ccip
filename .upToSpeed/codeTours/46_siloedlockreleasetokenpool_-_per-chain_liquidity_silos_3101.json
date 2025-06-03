@@ -1,0 +1,137 @@
+{
+  "title": "4.6: SiloedLockReleaseTokenPool – Per-Chain Liquidity Silos",
+  "id": "O/hHSPgcnszV4TBZrz76077WVukjb+XAMB4xC4kn5qI=",
+  "originalId": 3101,
+  "position": 21,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This walkthrough explores how `SiloedLockReleaseTokenPool` separates per-chain liquidity from a shared pool and how designated rebalancers keep both sides balanced.",
+      "title": "",
+      "id": "37047"
+    },
+    {
+      "type": "highlight",
+      "description": "Lines 33-38 hold the single shared balance for every non-siloed chain, while lines 45-48 define `SiloConfig`’s per-chain `tokenBalance`, `rebalancer` and `isSiloed` flag. The **mapping** in line 51 stores one struct per remote chain.",
+      "file": "chains/evm/contracts/pools/SiloedLockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 33,
+          "end": 52
+        }
+      ],
+      "title": "",
+      "id": "37048"
+    },
+    {
+      "type": "highlight",
+      "description": "`lockOrBurn` (61-78) is called when outbound CCIP messages lock tokens. After the parent pool’s checks, the amount is routed into either the caller’s `SiloConfig.tokenBalance` (70) or the shared `s_unsiloedTokenBalance` (74), depending on the chain’s `isSiloed` flag.",
+      "file": "chains/evm/contracts/pools/SiloedLockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 61,
+          "end": 78
+        }
+      ],
+      "title": "",
+      "id": "37049"
+    },
+    {
+      "type": "highlight",
+      "description": "`releaseOrMint` (80-122) performs the opposite flow. It calculates the `localAmount`, selects the correct `bucket`, verifies liquidity (100-102) and decrements that `bucket` (104-108) before transferring to the receiver. The **InsufficientLiquidity revert** blocks one chain from draining another.",
+      "file": "chains/evm/contracts/pools/SiloedLockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 80,
+          "end": 122
+        }
+      ],
+      "title": "",
+      "id": "37050"
+    },
+    {
+      "type": "highlight",
+      "description": "Read-only helpers: `getAvailableTokens()` chooses between the chain’s siloed balance and the shared pool (133-137). `getUnsiloedLiquidity()` (142-143) exposes the size of the common bucket.",
+      "file": "chains/evm/contracts/pools/SiloedLockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 124,
+          "end": 145
+        }
+      ],
+      "title": "",
+      "id": "37051"
+    },
+    {
+      "type": "highlight",
+      "description": "`updateSiloDesignations` (164-195) lets the owner flip chains in or out of silo mode. Removing a silo moves its funds into the shared pool (169-173); adding a silo initialises a fresh `SiloConfig` with a dedicated **rebalancer** (190-192).",
+      "file": "chains/evm/contracts/pools/SiloedLockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 164,
+          "end": 195
+        }
+      ],
+      "title": "",
+      "id": "37052"
+    },
+    {
+      "type": "highlight",
+      "description": "Owner-only setters: `setSiloRebalancer` (222-231) changes the rebalancer for a specific silo, while `setRebalancer` (235-243) updates the single address that manages the shared pool. Events record each change.",
+      "file": "chains/evm/contracts/pools/SiloedLockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 218,
+          "end": 244
+        }
+      ],
+      "title": "",
+      "id": "37053"
+    },
+    {
+      "type": "highlight",
+      "description": "Deposits funnel through `_provideLiquidity` (`273-288`). It rejects zero amounts, requires `msg.sender` to match `getChainRebalancer`, credits the correct bucket (`281` or `283`), pulls tokens via `safeTransferFrom` and emits `LiquidityAdded`.",
+      "file": "chains/evm/contracts/pools/SiloedLockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 250,
+          "end": 288
+        }
+      ],
+      "title": "",
+      "id": "37054"
+    },
+    {
+      "type": "highlight",
+      "description": "`_withdrawLiquidity` (`317-337`) mirrors deposits: caller must be the rebalancer, a guard prevents underflow (`325-327`), the chosen bucket is decremented (`329-333`), funds are transferred and **LiquidityRemoved** is emitted.",
+      "file": "chains/evm/contracts/pools/SiloedLockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 294,
+          "end": 337
+        }
+      ],
+      "title": "",
+      "id": "37055"
+    },
+    {
+      "type": "highlight",
+      "description": "`isSiloed()` is a lightweight view that reveals whether a chain currently operates with isolated liquidity.",
+      "file": "chains/evm/contracts/pools/SiloedLockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 154,
+          "end": 158
+        }
+      ],
+      "title": "",
+      "id": "37056"
+    },
+    {
+      "type": "textOnly",
+      "description": "By maintaining separate `SiloConfig` balances and enforcing `rebalancer-only mutations`, the contract ensures that problems on one chain stay contained while still allowing a shared liquidity pool where appropriate.",
+      "title": "",
+      "id": "37057"
+    }
+  ]
+}

@@ -1,0 +1,202 @@
+{
+  "title": "7.2: FeeQuoter: Core Data Structures & Storage",
+  "id": "vrGxLssJIMLmPP2V9SaMi+wyKvcu4qsAX9NKkUaoO60=",
+  "originalId": 3117,
+  "position": 36,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This tour focuses on the `FeeQuoter`’s low-level storage: every struct, mapping and immutable touched by later fee logic.  Master these pieces once and any future line that references them will be immediately readable.",
+      "title": "",
+      "id": "37255"
+    },
+    {
+      "type": "highlight",
+      "description": "`StaticConfig` exists only during construction.  87 caps the juels a single message may ever cost, 88 stores the canonical `LINK` token, and 91 declares how long a token price can stay in storage before being considered stale.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 86,
+          "end": 92
+        }
+      ],
+      "title": "",
+      "id": "37256"
+    },
+    {
+      "type": "highlight",
+      "description": "The constructor validates those three fields (229-233), then copies them into immutables (235-237).  From that point on every access is a cheap `i_*` read – StaticConfig never lives in storage.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 219,
+          "end": 238
+        }
+      ],
+      "title": "",
+      "id": "37257"
+    },
+    {
+      "type": "highlight",
+      "description": "TokenPriceFeedConfig backs both Keystone reports and Chainlink feeds.  • dataFeedAddress may be `address(0)` meaning “no feed – rely on manual price updates”.  • tokenDecimals lets the library re-base feed answers.  • isEnabled acts as a global on/off switch without losing the config.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 71,
+          "end": 75
+        }
+      ],
+      "title": "",
+      "id": "37258"
+    },
+    {
+      "type": "highlight",
+      "description": "TokenPriceFeedUpdate merely prepends the token address to a TokenPriceFeedConfig, letting the owner batch several updates in one call.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 78,
+          "end": 81
+        }
+      ],
+      "title": "",
+      "id": "37259"
+    },
+    {
+      "type": "highlight",
+      "description": "`DestChainConfig` is a \"one-stop\" struct for everything the quote engine needs per chain.  104-111 are absolute limits (payload, gas, token count).  107-110 & 117-119 are execution-gas and default-transfer costs.  111-115 set data-availability add-ons.  120 is `gasMultiplierWeiPerEth`, expressed with 1 e18 precision (11 e17 = +10 %).  121-122 hold staleness and flat network fees.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 101,
+          "end": 123
+        }
+      ],
+      "title": "",
+      "id": "37260"
+    },
+    {
+      "type": "highlight",
+      "description": "Each selector gets its own DestChainConfig instance inside `s_destChainConfigs`.  Every quoting path dereferences this mapping first.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 201,
+          "end": 203
+        }
+      ],
+      "title": "",
+      "id": "37261"
+    },
+    {
+      "type": "highlight",
+      "description": "TokenTransferFeeConfig drives per-token transfer pricing. 135-137 are the classic **min / max / bps** trio. 138 adds extra execution gas, while 140 introduces `destBytesOverhead`, the minimum bytes reserved for off-chain data (must at least cover the fixed pool return payload).",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 134,
+          "end": 142
+        }
+      ],
+      "title": "",
+      "id": "37262"
+    },
+    {
+      "type": "highlight",
+      "description": "Two thin *`Args`* wrappers: one for a single (`token`, `config`) pair (146-149) and one for an array of such pairs plus the destination selector (152-155).  They line up perfectly with the **batch updater**.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 146,
+          "end": 155
+        }
+      ],
+      "title": "",
+      "id": "37263"
+    },
+    {
+      "type": "highlight",
+      "description": "`_applyTokenTransferFeeConfigUpdates` enforces `min < max` (852-854) and the `destBytesOverhead` guard (856-858) before persisting to the nested mapping (860) and emitting the update event (862).  Deletions immediately follow in the same function.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 847,
+          "end": 862
+        }
+      ],
+      "title": "",
+      "id": "37264"
+    },
+    {
+      "type": "highlight",
+      "description": "A separate mapping holds `premiumMultiplierWeiPerEth` per token.  The 1 e18 base means you can multiply a 36-decimal USD fee by this value without further scaling.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 198,
+          "end": 199
+        }
+      ],
+      "title": "",
+      "id": "37265"
+    },
+    {
+      "type": "highlight",
+      "description": "Owner-only helper writes the multiplier (659-662) and emits an event (663).  Setting it to 0 removes the premium; 1 e18 is neutral; anything higher adds a surcharge.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 656,
+          "end": 663
+        }
+      ],
+      "title": "",
+      "id": "37266"
+    },
+    {
+      "type": "highlight",
+      "description": "Two global constants underpin every price calculation: `FEE_BASE_DECIMALS = 36` gives 36-decimal arithmetic head-room, and `KEYSTONE_PRICE_DECIMALS = 18` matches Keystone feed precision.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 170,
+          "end": 174
+        }
+      ],
+      "title": "",
+      "id": "37267"
+    },
+    {
+      "type": "highlight",
+      "description": "Price storage lives in two mappings that wrap an `Internal.TimestampedPackedUint224` (185-194).  `Immutables` 210-217 add the max message fee, LINK address and the token-price staleness threshold – all cheap to read in every calculation.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 185,
+          "end": 217
+        }
+      ],
+      "title": "",
+      "id": "37268"
+    },
+    {
+      "type": "highlight",
+      "description": "TimestampedPackedUint224 packs `value` (the 224-bit number) with its UNIX timestamp in a single slot.  FeeQuoter’s getters simply compare `block.timestamp` with this field to decide freshness.",
+      "file": "chains/evm/contracts/libraries/Internal.sol",
+      "highlight": [
+        {
+          "start": 47,
+          "end": 51
+        }
+      ],
+      "title": "",
+      "id": "37269"
+    },
+    {
+      "type": "textOnly",
+      "description": "Armed with these definitions \u0013 and the 36-vs-18-decimal convention \u0013 you can now glance at any `FeeQuoter` expression, mentally expand the structs or mappings it touches, and follow the maths with confidence.",
+      "title": "",
+      "id": "37270"
+    }
+  ]
+}

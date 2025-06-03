@@ -1,0 +1,124 @@
+{
+  "title": "2.8: RMN Security Interfaces",
+  "id": "Fy2hZhdBsOwIB6AAdNQQWe8fFBjJOuN9R+UFZBaakcU=",
+  "originalId": 3091,
+  "position": 9,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "**RMN** (Routing Management Network) gives `Chainlink CCIP` a **circuit-breaker / kill-switch** called a *curse*. When **RMN** declares a global curse or a lane-specific curse it must instantly stop:\n\n- the Router from accepting new messages,\n- the OnRamp from quoting fees, and\n- the OffRamp from committing or executing roots.\n\nThe complementary *blessing* mechanism lets an OffRamp prove that a `Merkle root` has been signed by the **RMN quorum** before it is stored. The following tour shows the on-chain hooks that implement these guarantees.",
+      "title": "",
+      "id": "36978"
+    },
+    {
+      "type": "highlight",
+      "description": "<text>\n\nIRMN is the **local** view of RMN. Every contract only needs three read-only hooks.\n\n- lines 7–10 – TaggedRoot couples a Merkle root with the CommitStore it belongs to.\n- lines 13–16 – `isBlessed` tells whether that tagged root is currently authorised.\n- lines 18–24 – two overloads of `isCursed` reveal a global curse or a lane-specific curse (`bytes16(chainSelector)`).\n\nNothing here mutates state; it is a pure kill-switch oracle.\n</text>",
+      "file": "chains/evm/contracts/interfaces/IRMN.sol",
+      "highlight": [
+        {
+          "start": 7,
+          "end": 24
+        }
+      ],
+      "title": "",
+      "id": "36979"
+    },
+    {
+      "type": "highlight",
+      "description": "<text>\n\nOn the **destination chain** the verifier is called `IRMNRemote`.\n\n- lines 9–12: `Signature` holds an ECDSA `(r,s)` pair from an RMN node.\n- lines 19–23: `verify()` takes an OffRamp address, a list of Merkle roots, and the node signatures. It **reverts** on any bad signature, so a successful call proves the roots are blessed.\n</text>",
+      "file": "chains/evm/contracts/interfaces/IRMNRemote.sol",
+      "highlight": [
+        {
+          "start": 9,
+          "end": 23
+        }
+      ],
+      "title": "",
+      "id": "36980"
+    },
+    {
+      "type": "highlight",
+      "description": "<text>\n\nThe remote interface adds read helpers consumed across CCIP:\n\n- line 27: `getCursedSubjects()` returns active cursed lanes.\n- lines 31–38: overloads of `isCursed()` expose global and per-lane curses.\n</text>",
+      "file": "chains/evm/contracts/interfaces/IRMNRemote.sol",
+      "highlight": [
+        {
+          "start": 25,
+          "end": 38
+        }
+      ],
+      "title": "",
+      "id": "36981"
+    },
+    {
+      "type": "highlight",
+      "description": "During `OffRamp.commit` the DON forwards a `CommitReport`.  Blessed roots **must** carry RMN signatures:\nlines 818-824 call `i_rmnRemote.verify(...)` before anything else.  A failed signature check reverts the entire commit, so only blessed roots ever enter `s_roots`.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 818,
+          "end": 824
+        }
+      ],
+      "title": "",
+      "id": "36982"
+    },
+    {
+      "type": "highlight",
+      "description": "<text>\n\nWhen OffRamp attempts to *execute* a report it first checks `i_rmnRemote.isCursed()` (line 378). If the source lane is cursed, it:\n- emits `SkippedReportExecution` (line 384) or reverts during manual execution (lines 379–382)\n- returns early (no proof verification, no message execution)\n\nA lane-specific curse thus freezes all downstream transfers.\n</text>",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 376,
+          "end": 385
+        }
+      ],
+      "title": "",
+      "id": "36983"
+    },
+    {
+      "type": "highlight",
+      "description": "Even the act of *committing* a root is blocked:\n`_commitRoot` (line 867) reverts if RMN says the lane is cursed, ensuring no new data slips in while the kill-switch is active.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 865,
+          "end": 869
+        }
+      ],
+      "title": "",
+      "id": "36984"
+    },
+    {
+      "type": "highlight",
+      "description": "The user-facing Router protects every entry-point with `whenNotCursed`.  It queries the **global** curse flag via `IRMN.isCursed()` (line 298) and reverts with `BadARMSignal()` when RMN pulls the plug.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 294,
+          "end": 300
+        }
+      ],
+      "title": "",
+      "id": "36985"
+    },
+    {
+      "type": "highlight",
+      "description": "On the source side the OnRamp refuses to even quote a fee for a cursed destination lane:\n`getFee()` (line 508) bails out with `CursedByRMN` if `i_rmnRemote.isCursed(destChain)` returns true.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 506,
+          "end": 510
+        }
+      ],
+      "title": "",
+      "id": "36986"
+    },
+    {
+      "type": "textOnly",
+      "description": "Putting it together:\n1. `RMN` nodes sign the Merkle roots they consider valid (a **blessing**).\n2. `OffRamp.commit` runs `verify()` – any root without enough signatures is rejected.\n3. At any time `RMN` governors can issue a **curse** (global or per-lane).\n4. All `CCIP` components check `isCursed()` at their critical entry-points:\n   • `Router` blocks new traffic.\n   • `OnRamp` stops quoting / sending to cursed lanes.\n   • `OffRamp` refuses to commit roots and silently skips execution.\n\nThese three tiny read-only hooks implement a robust cross-chain kill-switch without touching application logic.",
+      "title": "",
+      "id": "36987"
+    }
+  ]
+}

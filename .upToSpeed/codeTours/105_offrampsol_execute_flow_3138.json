@@ -1,0 +1,189 @@
+{
+  "title": "10.5: OffRamp.sol: Execute Flow",
+  "id": "HwKrHuWhYAHUbiqjKmWPz/dmmwZHWKh1iS072unrhvY=",
+  "originalId": 3138,
+  "position": 57,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This walkthrough follows an **execution report** from the first external call all the way to the receiver. Every hop is shown `in-code` so you can connect **OCR** report handling, **Merkle** proofs, **nonce management** and **gas accounting** to the **emitted events**.",
+      "title": "",
+      "id": "37451"
+    },
+    {
+      "type": "highlight",
+      "description": "The public entry point.  The caller (DON or manual executor) passes raw bytes.  They are decoded into `ExecutionReport[]` and forwarded to `_batchExecute`; only after the batch succeeds is the OCR transmission recorded.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 334,
+          "end": 341
+        }
+      ],
+      "title": "",
+      "id": "37452"
+    },
+    {
+      "type": "highlight",
+      "description": "`_batchExecute` dispatches each per-chain report. For DON execution `manualExecGasOverrides` is empty, for manual runs it carries per-message gas & token-gas overrides.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 350,
+          "end": 363
+        }
+      ],
+      "title": "",
+      "id": "37453"
+    },
+    {
+      "type": "highlight",
+      "description": "First gate inside `_executeSingleReport`: if the lane is *cursed* by `RMN`. Manual execution reverts, while DON execution just emits `SkippedReportExecution` and moves on.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 372,
+          "end": 386
+        }
+      ],
+      "title": "",
+      "id": "37454"
+    },
+    {
+      "type": "highlight",
+      "description": "`metaDataHash` locks every leaf to (source→dest) selectors and the expected On-Ramp. Each message is then hashed with it into `hashedLeaves[i]` for the Merkle proof.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 398,
+          "end": 407
+        }
+      ],
+      "title": "",
+      "id": "37455"
+    },
+    {
+      "type": "highlight",
+      "description": "**Leaves**, **proof array** and **bit flags** are verified; the **root’s commit timestamp** must be non-zero or the whole report reverts.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 428,
+          "end": 431
+        }
+      ],
+      "title": "",
+      "id": "37456"
+    },
+    {
+      "type": "highlight",
+      "description": "`_verify` reconstructs the root with `MerkleMultiProof` then looks it up in `s_roots`, bridging commit-phase to execution-phase.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 918,
+          "end": 926
+        }
+      ],
+      "title": "",
+      "id": "37457"
+    },
+    {
+      "type": "highlight",
+      "description": "Entering the per-message loop. Current bitmap state is fetched; messages already `SUCCESS` or `IN_PROGRESS` are skipped with `SkippedAlreadyExecutedMessage`.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 433,
+          "end": 447
+        }
+      ],
+      "title": "",
+      "id": "37458"
+    },
+    {
+      "type": "highlight",
+      "description": "Manual execution is allowed only after **DON** failure or when the commit report ages past the threshold.  **DON** retries are blocked by emitting `AlreadyAttempted`.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 456,
+          "end": 476
+        }
+      ],
+      "title": "",
+      "id": "37459"
+    },
+    {
+      "type": "highlight",
+      "description": "Ordered messages bump their inbound nonce via `INonceManager.incrementInboundNonce`; if the bump fails (gap detected) the message is silently skipped to keep ordering intact.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 485,
+          "end": 493
+        }
+      ],
+      "title": "",
+      "id": "37460"
+    },
+    {
+      "type": "highlight",
+      "description": "When tokens are present `_releaseOrMintTokens` can override `destGasAmount` per token using the supplied `tokenGasOverrides`, ensuring enough gas for pool calls during manual runs.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 769,
+          "end": 784
+        }
+      ],
+      "title": "",
+      "id": "37461"
+    },
+    {
+      "type": "highlight",
+      "description": "Before execution the state is set to `IN_PROGRESS`; after `_trialExecute` returns it is updated to `SUCCESS` or `FAILURE`, preventing re-entrancy from downgrading a final state.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 502,
+          "end": 506
+        }
+      ],
+      "title": "",
+      "id": "37462"
+    },
+    {
+      "type": "highlight",
+      "description": "`_trialExecute` wraps `executeSingleMessage` in `try/catch`.  Reverts are caught and mapped to **FAILURE** unless they are gas-estimation probes.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 541,
+          "end": 566
+        }
+      ],
+      "title": "",
+      "id": "37463"
+    },
+    {
+      "type": "highlight",
+      "description": "`ExecutionStateChanged` finalises the message. `gasUsed` is `gasStart - gasleft()`, covering routing, pool work and receiver execution – giving operators precise gas accounting.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 527,
+          "end": 537
+        }
+      ],
+      "title": "",
+      "id": "37464"
+    },
+    {
+      "type": "textOnly",
+      "description": "You can now follow an execution report end-to-end: `OCR` → `Merkle proof` → `per-message gating` & `nonce bump` → optional `gas overrides` → `receiver call` → `bitmap` and `events`. Every step leaves an on-chain footprint ready for audit or monitoring.",
+      "title": "",
+      "id": "37465"
+    }
+  ]
+}

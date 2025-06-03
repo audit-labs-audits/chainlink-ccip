@@ -1,0 +1,137 @@
+{
+  "title": "11.2: Data Structures & Storage Layout",
+  "id": "Z0ZM/7pacFWII1yjkrvpOJAZx59s8FPnW7nqe069QMk=",
+  "originalId": 3144,
+  "position": 64,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Unpacking the foundational data-shapes that all later `CCIPHome` flows build upon.",
+      "title": "",
+      "id": "37560"
+    },
+    {
+      "type": "highlight",
+      "description": "An `OCR3Node` is the atomic participant. It records a node’s **peer-to-peer ID**, the **public key** that will sign reports, and an optional **transmitter key**. Leaving `transmitterKey` empty flags a **signer-only node**, which is important when the committee wants more signers than transmitters.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 98,
+          "end": 104
+        }
+      ],
+      "title": "",
+      "id": "37561"
+    },
+    {
+      "type": "highlight",
+      "description": "**OCR3Config** bundles everything the **DON** needs for one remote chain. Highlights:\n- `pluginType` (line 111) distinguishes Commit vs Execution plugins.\n- `chainSelector` (112) ties the config to a specific chain.\n- `FRoleDON` (113) is the **DON**-wide fault tolerance parameter – the **“big F”**.\n- `nodes` (117) is the array of `OCR3Node` just shown, ensuring the signer/transmitter roster travels with the config.\n\nThe struct also carries off-chain encoded blobs so that on-chain storage stays minimal.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 110,
+          "end": 119
+        }
+      ],
+      "title": "",
+      "id": "37562"
+    },
+    {
+      "type": "highlight",
+      "description": "`VersionedConfig` wraps an `OCR3Config` with a **monotonically increasing version** and the keccak `configDigest`.  `CCIPHome` promotes or revokes whole `VersionedConfig`s, never touching the inner `OCR3Config` directly.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 121,
+          "end": 124
+        }
+      ],
+      "title": "",
+      "id": "37563"
+    },
+    {
+      "type": "highlight",
+      "description": "<text>\n\n`ChainConfig` keeps settings that are local to a destination chain, independent from any particular DON configuration:\n- `readers` – P2P IDs that may pull data from that chain.\n- `fChain` – the chain-level fault threshold (can vary per chain).\n- `config` – opaque bytes reserved for future expansion.\n</text>",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 127,
+          "end": 133
+        }
+      ],
+      "title": "",
+      "id": "37564"
+    },
+    {
+      "type": "highlight",
+      "description": "`ChainConfigArgs` is a convenience struct for batch updates: it pairs a `chainSelector` with its `ChainConfig`.  Used by `applyChainConfigUpdates` to add or remove chains.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 135,
+          "end": 139
+        }
+      ],
+      "title": "",
+      "id": "37565"
+    },
+    {
+      "type": "highlight",
+      "description": "The contract enforces `FRoleDON` ≥ `fChain`. During config validation it pulls `fChain` from `s_chainConfigurations` (line `476`) and reverts if the sub-committee threshold would exceed the DON-wide threshold (line `479`). This codifies the conceptual relationship between the two parameters.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 474,
+          "end": 481
+        }
+      ],
+      "title": "",
+      "id": "37566"
+    },
+    {
+      "type": "highlight",
+      "description": "This block defines implementation-specific digest tagging (PREFIX/PREFIX_MASK), limits on oracles (MAX_NUM_ORACLES) and concurrent configs (MAX_CONCURRENT_CONFIGS), plus a ZERO_DIGEST sentinel.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 141,
+          "end": 155
+        }
+      ],
+      "title": "",
+      "id": "37567"
+    },
+    {
+      "type": "highlight",
+      "description": "Global storage linking back to the structs:\n\n- `i_capabilitiesRegistry` (157) – the only address allowed to mutate configs.\n- `s_chainConfigurations` (160) – map `chainSelector` ➝ `ChainConfig`.\n- `s_remoteChainSelectors` (162) – enumerable mirror, enabling pagination.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 157,
+          "end": 165
+        }
+      ],
+      "title": "",
+      "id": "37568"
+    },
+    {
+      "type": "highlight",
+      "description": "Per-DON configuration storage:\n- `s_configs` (167) – for every DON & plugin, a 2-slot ring-buffer of `VersionedConfig` (index 0 or 1).\n- `s_currentVersion` (171) – ever-increasing counter fed into `configDigest`.\n- `s_activeConfigIndexes` (173) – tells which slot is currently \"active\"; **XOR** with 1 flips between active and candidate.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 167,
+          "end": 175
+        }
+      ],
+      "title": "",
+      "id": "37569"
+    },
+    {
+      "type": "textOnly",
+      "description": "With these structs, constants and mappings mapped out, any later flow becomes straightforward: locate an `OCR3Config` to inspect nodes & `FRoleDON`, follow `chainSelector` into `ChainConfig` for `fChain`, and use the storage maps to see whether you are looking at the active or candidate version.",
+      "title": "",
+      "id": "37570"
+    }
+  ]
+}

@@ -1,0 +1,111 @@
+{
+  "title": "8.8: OnRampWithMessageTransformer: Extension Hook",
+  "id": "BrpD2OAhD1g0GCPiJDBb3LGCMPkItehP4LTRRt3EYdQ=",
+  "originalId": 3130,
+  "position": 48,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Extending a lane contract can be done safely by subclassing it. The following tour shows how `OnRampWithMessageTransformer` bolts a message-rewriting plug-in onto the existing `OnRamp` flow without altering core code.",
+      "title": "",
+      "id": "37315"
+    },
+    {
+      "type": "highlight",
+      "description": "The new contract inherits the heavy-duty `OnRamp` implementation and introduces one extra **state slot** (line 11) that remembers an external `transformer contract`.",
+      "file": "chains/evm/contracts/onRamp/OnRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 9,
+          "end": 12
+        }
+      ],
+      "title": "",
+      "id": "37316"
+    },
+    {
+      "type": "highlight",
+      "description": "The constructor forwards all configuration to the `parent` (line 20) and rejects a zero transformer address (21-22) before persisting it (24).  This guard keeps deployments deterministic and secure.",
+      "file": "chains/evm/contracts/onRamp/OnRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 15,
+          "end": 25
+        }
+      ],
+      "title": "",
+      "id": "37317"
+    },
+    {
+      "type": "highlight",
+      "description": "A minimalist `view function` exposes the configured transformer so off-chain actors can look it up.",
+      "file": "chains/evm/contracts/onRamp/OnRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 27,
+          "end": 31
+        }
+      ],
+      "title": "",
+      "id": "37318"
+    },
+    {
+      "type": "highlight",
+      "description": "Because `OnRamp` itself extends `Ownable2StepMsgSender` (line 30), any child contract automatically gains the `onlyOwner` modifier – we will rely on that in the setter next.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 27,
+          "end": 33
+        }
+      ],
+      "title": "",
+      "id": "37319"
+    },
+    {
+      "type": "highlight",
+      "description": "The setter is restricted by `onlyOwner` (line 37) inherited from the parent and repeats the **zero-address guard** (38-40) before updating storage.",
+      "file": "chains/evm/contracts/onRamp/OnRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 33,
+          "end": 42
+        }
+      ],
+      "title": "",
+      "id": "37320"
+    },
+    {
+      "type": "highlight",
+      "description": "Here is the entire custom behaviour. The child overrides `_postProcessMessage`, delegating to the `transformer` inside a try/catch block. Any revert is re-thrown as a canonical `MessageTransformError` (`52-54`) so callers always see a predictable signature.",
+      "file": "chains/evm/contracts/onRamp/OnRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 44,
+          "end": 55
+        }
+      ],
+      "title": "",
+      "id": "37321"
+    },
+    {
+      "type": "highlight",
+      "description": "The default **hook** in the parent simply returns the message unchanged – making it an ideal extension point.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 264,
+          "end": 271
+        }
+      ],
+      "title": "",
+      "id": "37322"
+    },
+    {
+      "type": "textOnly",
+      "description": "With fewer than fifty lines we injected a custom message-transformation stage that can evolve independently.  The approach keeps the original contract untouched, leverages inherited access-control, and cleanly surfaces transformer failures to callers.",
+      "title": "",
+      "id": "37323"
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "title": "2.3: On-Ramp Interfaces",
+  "id": "GtL5fo7KNyRmYrve31Mz+7fJarfwB4NCOqZlo7XHcZ4=",
+  "originalId": 3089,
+  "position": 4,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This tour focuses on the outbound lane (**On-Ramp**) and how a message is priced, validated, ordered and finally dispatched.  We will walk through five `read helpers` and one `write function`, then tie them into a single end-to-end flow.",
+      "title": "",
+      "id": "36938"
+    },
+    {
+      "type": "highlight",
+      "description": "`getFee` is the `Router`’s dry-run pricing call.\n\n- On line 508, it checks whether the destination chain is \"cursed\" by RMN and reverts with `CursedByRMN` if so.\n- On line 510, it delegates all fee computation to `IFeeQuoter.getValidatedFee`; the On-Ramp contract itself contains no pricing logic.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 499,
+          "end": 511
+        }
+      ],
+      "title": "",
+      "id": "36939"
+    },
+    {
+      "type": "highlight",
+      "description": "<text>\n\n**Token helpers the Router may need while building a request:**\n- `getPoolBySourceToken` (483-486) resolves the **Pool** that will lock or burn the local **ERC-20**.\n- `getSupportedTokens` (489-493) now hard-reverts, pushing callers to query `TokenAdminRegistry` directly.\n</text>",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 483,
+          "end": 493
+        }
+      ],
+      "title": "",
+      "id": "36940"
+    },
+    {
+      "type": "highlight",
+      "description": "<text>\n\n`forwardFromRouter` is the only mutative entry-point.\n\nGate-keepers:\n\n- Line 169 toggles a bespoke re-entrancy flag.\n- Lines 174–183 ensure `originalSender` is present and (optionally) allow-listed.\n- Line 185 rejects every caller except the `Router` configured for this destination chain.\n</text>",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 160,
+          "end": 186
+        }
+      ],
+      "title": "",
+      "id": "36941"
+    },
+    {
+      "type": "highlight",
+      "description": "Once validated, the function builds the `Internal.EVM2AnyRampMessage` header:\n\n- Line 202 pre-increments `destChainConfig.sequenceNumber` – guaranteeing every outbound message gets a fresh, strictly increasing lane-wide sequence.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 195,
+          "end": 203
+        }
+      ],
+      "title": "",
+      "id": "36942"
+    },
+    {
+      "type": "highlight",
+      "description": "Sender-specific ordering is optional:\n- If `isOutOfOrderExecution` is true the `nonce` is set to 0.\n- Otherwise line 236 fetches the next per-sender nonce from the global `NonceManager`.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 234,
+          "end": 238
+        }
+      ],
+      "title": "",
+      "id": "36943"
+    },
+    {
+      "type": "highlight",
+      "description": "With the payload complete the contract emits `CCIPMessageSent` – the signal the **DON** watches for to pick up and relay the packet.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 254,
+          "end": 258
+        }
+      ],
+      "title": "",
+      "id": "36944"
+    },
+    {
+      "type": "highlight",
+      "description": "For a quick peek at the next lane-wide sequence value (without mutating state) clients can call `getExpectedNextSequenceNumber` shown here.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 151,
+          "end": 158
+        }
+      ],
+      "title": "",
+      "id": "36945"
+    },
+    {
+      "type": "highlight",
+      "description": "`IEVM2AnyOnRamp` extends the client interface with two extra reads:\n\n- `getExpectedNextSequenceNumber` (lane-wide counter we just saw).\n- `getSenderNonce` – returns the current per-sender nonce used inside `forwardFromRouter` line `236`.",
+      "file": "chains/evm/contracts/interfaces/IEVM2AnyOnRamp.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 16
+        }
+      ],
+      "title": "",
+      "id": "36946"
+    },
+    {
+      "type": "textOnly",
+      "description": "Mini-flow recap:\n`Router.getFee()` → `IFeeQuoter.pricing`\n`Router.forwardFromRouter()` → `OnRamp.lockOrBurn()` + build message → emit `CCIPMessageSent`\nThe DON observes the event and carries the message to the destination chain.",
+      "title": "",
+      "id": "36947"
+    },
+    {
+      "type": "textOnly",
+      "description": "You now know where the `outbound lane prices`, `guards`, `orders`, and `publishes` each cross-chain message.",
+      "title": "",
+      "id": "36948"
+    }
+  ]
+}

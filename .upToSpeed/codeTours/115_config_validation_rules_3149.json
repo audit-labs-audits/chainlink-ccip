@@ -1,0 +1,156 @@
+{
+  "title": "11.5: Config Validation Rules",
+  "id": "b9Gy0HmJMYINczThhWEqRGWlDaj8b1PxmW0/WbDcjio=",
+  "originalId": 3149,
+  "position": 67,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "The tour explains every guard that prevents an invalid `OCR-3` configuration from being accepted by `CCIPHome`.",
+      "title": "",
+      "id": "37466"
+    },
+    {
+      "type": "highlight",
+      "description": "All reverts used by `_validateConfig` are declared here.  Each one names a single rule, making failures self-describing.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 78,
+          "end": 97
+        }
+      ],
+      "title": "",
+      "id": "37467"
+    },
+    {
+      "type": "textOnly",
+      "description": "`_validateConfig` is the gatekeeper.  We descend through its checks in source order, mapping each to an error above.",
+      "title": "",
+      "id": "37468"
+    },
+    {
+      "type": "highlight",
+      "description": "**Basic header:** `chainSelector` must be non-zero, and `pluginType` must be `Commit` or `Execution`. Otherwise `ChainSelectorNotSet` or `InvalidPluginType`.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 459,
+          "end": 465
+        }
+      ],
+      "title": "",
+      "id": "37469"
+    },
+    {
+      "type": "highlight",
+      "description": "Encoded addresses: the remote `OffRamp` and `RMNHome` are passed as `ABI`-encoded bytes.  A hash comparison rejects both empty bytes and an encoded zero address, triggering `OfframpAddressCannotBeZero` or `RMNHomeAddressCannotBeZero`.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 466,
+          "end": 471
+        }
+      ],
+      "title": "",
+      "id": "37470"
+    },
+    {
+      "type": "highlight",
+      "description": "Known chain: the selector must already be present in `s_remoteChainSelectors` (populated via `applyChainConfigUpdates`).  Failure leads to `ChainSelectorNotFound`.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 472,
+          "end": 473
+        }
+      ],
+      "title": "",
+      "id": "37471"
+    },
+    {
+      "type": "highlight",
+      "description": "**Fault-tolerance relationship:** the chain’s `fChain` (stored in `ChainConfig`) may never exceed the submitted `FRoleDON`.  A violation reverts with `FChainTooHigh`.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 474,
+          "end": 481
+        }
+      ],
+      "title": "",
+      "id": "37472"
+    },
+    {
+      "type": "highlight",
+      "description": "Global signer count: `nodes.length` must fit under `MAX_NUM_ORACLES` and be strictly greater than `3 × FRoleDON`. Exceeding the upper limit reverts `TooManySigners`, falling short reverts `FTooHigh`.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 483,
+          "end": 488
+        }
+      ],
+      "title": "",
+      "id": "37473"
+    },
+    {
+      "type": "highlight",
+      "description": "Per-node checks executed in a loop:\n- If a `transmitterKey` is non-empty, it is counted.\n- Every node must carry a `signerKey` and a non-zero `p2pId`. Empty fields trigger `InvalidNode`.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 489,
+          "end": 506
+        }
+      ],
+      "title": "",
+      "id": "37474"
+    },
+    {
+      "type": "highlight",
+      "description": "Transmitter quorum: the number of non-zero transmitter keys must be at least `3 × fChain + 1`. Falling short raises `NotEnoughTransmitters` with the precise deficit.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 508,
+          "end": 514
+        }
+      ],
+      "title": "",
+      "id": "37475"
+    },
+    {
+      "type": "highlight",
+      "description": "Registry membership: `_ensureInRegistry` is called with all collected `p2pIds`.  If any id is missing, the external call reverts and the config is rejected.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 516,
+          "end": 518
+        }
+      ],
+      "title": "",
+      "id": "37476"
+    },
+    {
+      "type": "highlight",
+      "description": "`_ensureInRegistry` uses `INodeInfoProvider` on the global **Capabilities Registry**.  An empty array is skipped; any non-empty array must match registered nodes.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 615,
+          "end": 623
+        }
+      ],
+      "title": "",
+      "id": "37477"
+    },
+    {
+      "type": "textOnly",
+      "description": "A configuration is accepted only when every guard described above passes: structural fields are populated, the `fChain/FRoleDON` inequality holds, `signer` and `transmitter` counts satisfy quorum formulas, each `node` is well-formed, and all `p2pIds` exist in the registry. Otherwise the precise rule that fails is surfaced through its dedicated error.",
+      "title": "",
+      "id": "37478"
+    }
+  ]
+}

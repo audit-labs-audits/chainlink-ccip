@@ -1,0 +1,98 @@
+{
+  "title": "9.1: Router.sol – Architecture & Storage",
+  "id": "ifqKc1VNye5kH3Z9EAPme921i+UHWUs6BdkDBPqpWIw=",
+  "originalId": 3132,
+  "position": 49,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Everything the user does with `CCIP` eventually arrives at this `Router`. Its state is deliberately tiny so audits and monitoring can focus on just four variables while the rest of the contract remains pure forwarding logic.",
+      "title": "",
+      "id": "37298"
+    },
+    {
+      "type": "highlight",
+      "description": "The inheritance line (27) shows the Router sits at the crossroads of three external interfaces – `IRouter`, `IRouterClient`, and `ITypeAndVersion`.  It also mixes-in OpenZeppelin helpers via `SafeERC20` and `EnumerableSet`, ensuring transfers and sets work safely without adding new storage.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 24,
+          "end": 30
+        }
+      ],
+      "title": "",
+      "id": "37299"
+    },
+    {
+      "type": "highlight",
+      "description": "Four custom errors (31-34) capture the only situations that should ever revert at runtime, each carrying just enough context for off-chain diagnosis. The paired events (36-39) emit on every configuration change and on every inbound message execution so dashboards can reconstruct the full routing table and replay traffic.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 31,
+          "end": 40
+        }
+      ],
+      "title": "",
+      "id": "37300"
+    },
+    {
+      "type": "highlight",
+      "description": "The `OnRamp` struct associates a 64-bit destination chain selector with an on-ramp contract address, while the `OffRamp` struct pairs a 64-bit source chain selector with an off-ramp contract address. These structs are passed as arrays into `applyRampUpdates`, enabling the owner to update multiple on- and off-ramps in a single transaction. Batching updates in this way helps reduce overall gas consumption.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 41,
+          "end": 49
+        }
+      ],
+      "title": "",
+      "id": "37301"
+    },
+    {
+      "type": "highlight",
+      "description": "`MAX_RET_BYTES` (53-55) limits return-data to a selector + four words. That single guard defuses the classic *return-data bomb*: a malicious receiver could otherwise return megabytes of data, forcing the caller to spend all its gas copying it.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 51,
+          "end": 56
+        }
+      ],
+      "title": "",
+      "id": "37302"
+    },
+    {
+      "type": "highlight",
+      "description": "<text>\n\nHere is every persistent variable the Router owns:\n\n- `i_armProxy` – immutable Risk Monitoring Network address.\n- `s_wrappedNative` – mutable pointer to the wrapped native fee token.\n- `s_onRamps` – mapping `<destChainSelector ⇒ onRamp>`; only one active on-ramp per destination chain.\n- `s_chainSelectorAndOffRamps` – an `EnumerableSet.UintSet` holding packed keys so membership checks cost O(1). No other state exists.\n</text>",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 58,
+          "end": 68
+        }
+      ],
+      "title": "",
+      "id": "37303"
+    },
+    {
+      "type": "highlight",
+      "description": "Packing is handled by `_mergeChainSelectorAndOffRamp`: shift the 64-bit `sourceChainSelector` left by 160 bits (lines 183-187) and OR the 160-bit `offRamp` address.  The resulting 256-bit word is unique per pair and drops straight into the set without allocating a new mapping slot.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 181,
+          "end": 188
+        }
+      ],
+      "title": "",
+      "id": "37304"
+    },
+    {
+      "type": "textOnly",
+      "description": "With those four variables and the one packing helper in mind, every other function in the file reduces to simple reads, writes, or membership checks. The Router keeps its state minimal and explicit so routing, fees, and risk controls remain transparent to integrators.",
+      "title": "",
+      "id": "37305"
+    }
+  ]
+}

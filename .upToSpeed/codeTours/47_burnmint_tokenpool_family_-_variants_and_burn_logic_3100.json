@@ -1,0 +1,104 @@
+{
+  "title": "4.7: BurnMint TokenPool Family – Variants & Burn Logic",
+  "id": "dakc1D1hwyuvhyYmwIFltGmXRuJ4TzcZEamn3nmjKxo=",
+  "originalId": 3100,
+  "position": 22,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "**Every burn-mint pool** shares the same `mint logic`; what changes from variant to variant is the single line that `destroys` (or `locks`) the tokens that arrive.",
+      "title": "",
+      "id": "37067"
+    },
+    {
+      "type": "highlight",
+      "description": "All variants inherit this helper.  It mints new tokens to the receiver, so the release side is identical everywhere.",
+      "file": "chains/evm/contracts/pools/BurnMintTokenPoolAbstract.sol",
+      "highlight": [
+        {
+          "start": 12,
+          "end": 14
+        }
+      ],
+      "title": "",
+      "id": "37068"
+    },
+    {
+      "type": "highlight",
+      "description": "Variant that calls burn(amount) directly – ideal for ERC-20s following OpenZeppelin’s simple burn interface.",
+      "file": "chains/evm/contracts/pools/BurnMintTokenPool.sol",
+      "highlight": [
+        {
+          "start": 28,
+          "end": 33
+        }
+      ],
+      "title": "",
+      "id": "37069"
+    },
+    {
+      "type": "highlight",
+      "description": "Here the constructor gives the pool an unlimited allowance on itself (30-34) then burns from its own balance with burnFrom(this, amount) (37-41).  Use when the token exposes burnFrom(from, amount).",
+      "file": "chains/evm/contracts/pools/BurnFromMintTokenPool.sol",
+      "highlight": [
+        {
+          "start": 30,
+          "end": 41
+        }
+      ],
+      "title": "",
+      "id": "37070"
+    },
+    {
+      "type": "highlight",
+      "description": "Similar pattern but the burn signature is burn(address, amount).  The pool pre-approves itself, then passes its address explicitly (37-41).",
+      "file": "chains/evm/contracts/pools/BurnWithFromMintTokenPool.sol",
+      "highlight": [
+        {
+          "start": 30,
+          "end": 41
+        }
+      ],
+      "title": "",
+      "id": "37071"
+    },
+    {
+      "type": "highlight",
+      "description": "This variant stores an immutable black-hole address that can never move the tokens.",
+      "file": "chains/evm/contracts/pools/BurnToAddressMintTokenPool.sol",
+      "highlight": [
+        {
+          "start": 24,
+          "end": 30
+        }
+      ],
+      "title": "",
+      "id": "37072"
+    },
+    {
+      "type": "highlight",
+      "description": "Locking happens by transferring the tokens to that address instead of calling any burn function.",
+      "file": "chains/evm/contracts/pools/BurnToAddressMintTokenPool.sol",
+      "highlight": [
+        {
+          "start": 45,
+          "end": 49
+        }
+      ],
+      "title": "",
+      "id": "37073"
+    },
+    {
+      "type": "textOnly",
+      "description": "- `burn(amount)` → **BurnMintTokenPool** (`chains/evm/contracts/pools/BurnMintTokenPool.sol`)\n- `burnFrom(from, amount)` → **BurnFromMintTokenPool** (`chains/evm/contracts/pools/BurnFromMintTokenPool.sol`)\n- `burn(address, amount)` → **BurnWithFromMintTokenPool** (`chains/evm/contracts/pools/BurnWithFromMintTokenPool.sol`)\n- No `burn` function (use `safeTransfer`) → **BurnToAddressMintTokenPool** (`chains/evm/contracts/pools/BurnToAddressMintTokenPool.sol`)",
+      "title": "",
+      "id": "37074"
+    },
+    {
+      "type": "textOnly",
+      "description": "Regardless of which burn path is used, the heavy-lifting\u001fvalidation, accounting, and cross-chain messaging\u001flives in `TokenPool` and is inherited unchanged by every variant.",
+      "title": "",
+      "id": "37075"
+    }
+  ]
+}

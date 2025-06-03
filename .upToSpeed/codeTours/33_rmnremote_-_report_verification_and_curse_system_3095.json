@@ -1,0 +1,202 @@
+{
+  "title": "3.3: RMNRemote – Report Verification & Curse System",
+  "id": "RDdacXu7mrJ2gT44K/m1Vrs+sPAAELn5pHUsFANAgAM=",
+  "originalId": 3095,
+  "position": 14,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This tour focuses on three pillars inside `RMNRemote.sol`: how signers are arranged and validated, how reports are verified on-chain, and how the owner can halt the protocol with the curse mechanism.",
+      "title": "",
+      "id": "36988"
+    },
+    {
+      "type": "highlight",
+      "description": "**GLOBAL_CURSE_SUBJECT** (line 15) is a **sentinel value**; if it is present in the curse set every `isCursed` call instantly returns true, freezing all off-ramp traffic.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 12,
+          "end": 15
+        }
+      ],
+      "title": "",
+      "id": "36989"
+    },
+    {
+      "type": "highlight",
+      "description": "`RMN_V1_6_ANY2EVM_REPORT` (line 66) anchors every signature to protocol version 1.6. Tampering with the constant would invalidate all existing signatures.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 65,
+          "end": 67
+        }
+      ],
+      "title": "",
+      "id": "36990"
+    },
+    {
+      "type": "highlight",
+      "description": "Every `Signer` stores the `ECDSA` address and a `nodeIndex` that must be strictly increasing through the array. The `Config` struct bundles those signers, the corresponding `RMNHome` digest, and `fSign` (the tolerated fault count). Using an ordered `nodeIndex` makes different deployments converge on the same signer list and lets `setConfig` perform a simple monotonicity check.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 41,
+          "end": 52
+        }
+      ],
+      "title": "",
+      "id": "36991"
+    },
+    {
+      "type": "highlight",
+      "description": "`setConfig()` performs its validations top-down: (1) non-zero `RMNHome` digest (141-144), (2) strictly increasing `nodeIndex` (145-149), (3) |`signers`| ≥ 2·`fSign`+1 (153-155).  These steps ensure the new configuration can satisfy **BFT requirements** before any state is mutated.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 138,
+          "end": 156
+        }
+      ],
+      "title": "",
+      "id": "36992"
+    },
+    {
+      "type": "highlight",
+      "description": "Once pre-checks pass, every `address` from the previous `config` is deleted from the `signer lookup map`, guaranteeing a clean slate.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 157,
+          "end": 160
+        }
+      ],
+      "title": "",
+      "id": "36993"
+    },
+    {
+      "type": "highlight",
+      "description": "New signers are inserted one by one; encountering a duplicate address triggers `DuplicateOnchainPublicKey` (164-166).  The **boolean map** (167-168) later lets `verify()` reject unexpected signers in O(1).",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 162,
+          "end": 168
+        }
+      ],
+      "title": "",
+      "id": "36994"
+    },
+    {
+      "type": "highlight",
+      "description": "Finally the fresh `Config` is stored, the version counter is incremented, and `ConfigSet` is emitted – the whole update is atomic.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 170,
+          "end": 173
+        }
+      ],
+      "title": "",
+      "id": "36995"
+    },
+    {
+      "type": "highlight",
+      "description": "`RMN` nodes sign with `v = 27` only. Hard-coding `ECDSA_RECOVERY_V` lets signatures be shipped as `(r,s)` instead of `(r,s,v)`, cutting calldata costs by one byte per signature.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 75,
+          "end": 78
+        }
+      ],
+      "title": "",
+      "id": "36996"
+    },
+    {
+      "type": "highlight",
+      "description": "`verify()` begins with two quick checks: `config` must exist and at least `fSign+1` signatures must be supplied (`101-105`). It then rebuilds the signed digest entirely from on-chain data (`106-118`), binding the signatures to the chain, selector, `RMNRemote` address, `offramp`, current config digest, and the lane updates.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 101,
+          "end": 118
+        }
+      ],
+      "title": "",
+      "id": "36997"
+    },
+    {
+      "type": "highlight",
+      "description": "In the loop each signature is recovered with the fixed `v` (123-124).  Addresses must appear in strictly ascending order (125) – this eliminates duplicates without extra storage.  Any address not present in the `signer map` (126) aborts.  After all signatures pass, the report is considered valid.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 120,
+          "end": 129
+        }
+      ],
+      "title": "",
+      "id": "36998"
+    },
+    {
+      "type": "highlight",
+      "description": "`curse()` inserts subjects into an `EnumerableSet` and reverts if any subject is already present, preventing accidental double-curse.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 212,
+          "end": 218
+        }
+      ],
+      "title": "",
+      "id": "36999"
+    },
+    {
+      "type": "highlight",
+      "description": "`uncurse()` is its mirror: removal fails if the subject is not currently cursed, protecting against stale uncurses or duplicated entries.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 235,
+          "end": 243
+        }
+      ],
+      "title": "",
+      "id": "37000"
+    },
+    {
+      "type": "highlight",
+      "description": "`isCursed()` and `isCursed(subject)` both fast-path when no curses exist (255-268).  If `GLOBAL_CURSE_SUBJECT` is in the set, either call returns true (258-259 & 270-271), enabling an immediate, chain-wide shutdown.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 252,
+          "end": 271
+        }
+      ],
+      "title": "",
+      "id": "37001"
+    },
+    {
+      "type": "highlight",
+      "description": "For traffic produced by `CCIP` versions earlier than 1.6 the legacy `isBlessed()` API is still required.  The call is forwarded to the previous `RMN contract`, keeping backward compatibility without polluting the new interface.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 277,
+          "end": 287
+        }
+      ],
+      "title": "",
+      "id": "37002"
+    },
+    {
+      "type": "textOnly",
+      "description": "Putting it together: deterministic signer ordering gives predictable configs, the `fixed-v ECDSA` trick keeps verification cheap, and the curse mechanism provides an **owner-controlled emergency stop** — either for specific subjects or the entire chain.",
+      "title": "",
+      "id": "37003"
+    }
+  ]
+}

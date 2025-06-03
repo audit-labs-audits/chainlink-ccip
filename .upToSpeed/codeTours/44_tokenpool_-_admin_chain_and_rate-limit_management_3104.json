@@ -1,0 +1,189 @@
+{
+  "title": "4.4: TokenPool – Admin, Chain & Rate-Limit Management",
+  "id": "ENrIYRXyzyV9pTzHGgjm6DGYFOjnibMF+jCzVi39pXw=",
+  "originalId": 3104,
+  "position": 19,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This tour explores how a `TokenPool` is configured: which chains & pools it trusts, who can call it, and the speed limits on value flows.",
+      "title": "",
+      "id": "37032"
+    },
+    {
+      "type": "highlight",
+      "description": "`getRemotePools` walks the enumerable set of pool hashes, converts each hash back to its original bytes and returns the list, giving callers a decoded view of every configured pool for a chain.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 381,
+          "end": 394
+        }
+      ],
+      "title": "",
+      "id": "37033"
+    },
+    {
+      "type": "highlight",
+      "description": "`isRemotePool` is a constant-time membership check against the same set, while `getRemoteToken` fetches the token address recorded for that chain.  All three are pure reads – no storage is mutated.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 396,
+          "end": 410
+        }
+      ],
+      "title": "",
+      "id": "37034"
+    },
+    {
+      "type": "highlight",
+      "description": "`applyChainUpdates` first processes `remoteChainSelectorsToRemove`.\n\n- Each selector must already exist (468–470) or the call reverts.  \n- All pool hashes for that selector are deleted (472–476).  \n- The entire `RemoteChainConfig` struct is wiped (478) and `ChainRemoved` is emitted (480).  ",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 461,
+          "end": 480
+        }
+      ],
+      "title": "",
+      "id": "37035"
+    },
+    {
+      "type": "highlight",
+      "description": "Next it loops over chainsToAdd.\n\n- Rate-limiter configs are sanity-checked (`485-487`).\n- A non-zero remote token is mandatory (`488-490`).\n- Duplicate selectors are rejected (`492-495`).\n- Fresh `TokenBucket` structs are created with full capacity and current timestamp (`499-512`).\n",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 481,
+          "end": 508
+        }
+      ],
+      "title": "",
+      "id": "37036"
+    },
+    {
+      "type": "highlight",
+      "description": "Every supplied `remotePoolAddress` is stored via `_setRemotePool` (515-517).  At the end a single `ChainAdded` **event** (519-524) captures the whole configuration, making it trivial to index off-chain.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 509,
+          "end": 526
+        }
+      ],
+      "title": "",
+      "id": "37037"
+    },
+    {
+      "type": "highlight",
+      "description": "`_setRemotePool` guards against empty `bytes` (532-534), hashes the address for `set` storage, and reverts on duplicates (538-541).  The unhashed form is kept in a `mapping` so the original value can always be recovered.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 531,
+          "end": 547
+        }
+      ],
+      "title": "",
+      "id": "37038"
+    },
+    {
+      "type": "highlight",
+      "description": "`setRouter` lets the owner hot-swap to a new `Router`.  A **zero address** is forbidden (183), the pointer is updated (185) and `RouterUpdated` logs both old and new values so other contracts or indexers can adjust permissions instantly.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 178,
+          "end": 188
+        }
+      ],
+      "title": "",
+      "id": "37039"
+    },
+    {
+      "type": "highlight",
+      "description": "A separate `rateLimitAdmin` can be appointed.  **Owners** can change it (574-579) and anyone can query it (581-584).  Later functions check `msg.sender` against this address before allowing bucket updates.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 571,
+          "end": 585
+        }
+      ],
+      "title": "",
+      "id": "37040"
+    },
+    {
+      "type": "highlight",
+      "description": "During runtime the pool spends capacity from its `token buckets`.  `_consumeOutboundRateLimit` and `_consumeInboundRateLimit` delegate to `RateLimiter.TokenBucket._consume` and then emit the exact amount deducted – perfect metrics hooks.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 586,
+          "end": 598
+        }
+      ],
+      "title": "",
+      "id": "37041"
+    },
+    {
+      "type": "highlight",
+      "description": "`setChainRateLimiterConfig` is callable by either the owner or the rateLimitAdmin (644-645).  It forwards to the internal helper once access is verified.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 636,
+          "end": 647
+        }
+      ],
+      "title": "",
+      "id": "37042"
+    },
+    {
+      "type": "highlight",
+      "description": "`_setRateLimitConfig` confirms the chain exists (`654`), validates both configs, applies them to the live `TokenBuckets`, and broadcasts a `ChainConfigured` event so observers know new limits are active.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 649,
+          "end": 660
+        }
+      ],
+      "title": "",
+      "id": "37043"
+    },
+    {
+      "type": "highlight",
+      "description": "`getAllowListEnabled` exposes the immutable flag and `getAllowList` returns the current addresses. If the pool was deployed without an **allow-list** the flag is false and these helpers are inert.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 698,
+          "end": 709
+        }
+      ],
+      "title": "",
+      "id": "37044"
+    },
+    {
+      "type": "highlight",
+      "description": "`applyAllowListUpdates` can only be used when the flag is true (719-720). Each removal or addition triggers its own event (723-735), giving an auditable history of who gained or lost permission.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 710,
+          "end": 736
+        }
+      ],
+      "title": "",
+      "id": "37045"
+    },
+    {
+      "type": "textOnly",
+      "description": "These configuration hooks define which `chains` & `pools` are trusted, who can initiate transfers, and the per-chain throughput allowed – the operational heart of the bridge.",
+      "title": "",
+      "id": "37046"
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "title": "10.4: OffRamp.sol: Commit Flow",
+  "id": "A/xQIvOy2rNNpmUejV+d5d7BxFKaSkUa9xbrWvGluj0=",
+  "originalId": 3137,
+  "position": 56,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "`OffRamp.sol`’s `commit()` ingests `DON` commit reports, verifies `RMN` signatures, applies fresh price updates, commits per‐chain merkle roots, persists state, and finally broadcasts the report via `MultiOCR3Base`.",
+      "title": "",
+      "id": "37391"
+    },
+    {
+      "type": "highlight",
+      "description": "`commit()` receives `reportContext`, `report`, `RMN` signature arrays, then decodes `report` into the `CommitReport` struct.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 809,
+          "end": 817
+        }
+      ],
+      "title": "",
+      "id": "37392"
+    },
+    {
+      "type": "highlight",
+      "description": "If there are `blessedMerkleRoots`, call `i_rmnRemote.verify(...)` to check RMN signatures on those roots.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 819,
+          "end": 822
+        }
+      ],
+      "title": "",
+      "id": "37393"
+    },
+    {
+      "type": "highlight",
+      "description": "When `priceUpdates` are present, extract `ocrSequenceNumber` from `reportContext` and compare to `s_latestPriceSequenceNumber`. If newer, update `s_latestPriceSequenceNumber` and call `IFeeQuoter.updatePrices()`; otherwise, revert if no roots are present (`StaleCommitReport`).",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 824,
+          "end": 835
+        }
+      ],
+      "title": "",
+      "id": "37394"
+    },
+    {
+      "type": "highlight",
+      "description": "Loop over `commitReport.blessedMerkleRoots` and `.unblessedMerkleRoots`, invoking `_commitRoot(root, isBlessed)` for each.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 843,
+          "end": 850
+        }
+      ],
+      "title": "",
+      "id": "37395"
+    },
+    {
+      "type": "textOnly",
+      "description": "`_commitRoot` enforces per-chain invariants and persists each **merkle root**’s commit timestamp.",
+      "title": "",
+      "id": "37396"
+    },
+    {
+      "type": "highlight",
+      "description": "`_commitRoot` extracts `root.sourceChainSelector`, then reverts if `i_rmnRemote.isCursed(...)` is true. It fetches the enabled `SourceChainConfig` next.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 864,
+          "end": 872
+        }
+      ],
+      "title": "",
+      "id": "37397"
+    },
+    {
+      "type": "highlight",
+      "description": "Here we perform two validation steps on the incoming root. First, we verify that the root’s blessing flag matches the source chain’s RMN verification setting—if they’re out of sync, execution reverts with RootBlessingMismatch. Then we confirm that the root’s on-ramp address matches the expected address configured for that chain; a mismatch here triggers CommitOnRampMismatch.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 873,
+          "end": 881
+        }
+      ],
+      "title": "",
+      "id": "37398"
+    },
+    {
+      "type": "highlight",
+      "description": "Validate the sequence interval: `sourceChainConfig.minSeqNr` must equal `root.minSeqNr` and `root.minSeqNr` ≤ `root.maxSeqNr` (`InvalidInterval`).",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 883,
+          "end": 885
+        }
+      ],
+      "title": "",
+      "id": "37399"
+    },
+    {
+      "type": "highlight",
+      "description": "Guard against an empty root (`InvalidRoot`) or duplicate commits (`s_roots[...]≠0 ⇒ RootAlreadyCommitted`).",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 887,
+          "end": 893
+        }
+      ],
+      "title": "",
+      "id": "37400"
+    },
+    {
+      "type": "highlight",
+      "description": "Once the root has passed all validation, the contract advances the allowed sequence window by bumping `minSeqNr` past the reported maximum, then records this `merkleRoot` in `s_roots` with the current block timestamp. This both enforces strictly increasing roots and guards against processing the same root twice.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 895,
+          "end": 897
+        }
+      ],
+      "title": "",
+      "id": "37401"
+    },
+    {
+      "type": "highlight",
+      "description": "After all roots are committed, emit `CommitReportAccepted(...)` and call `_transmit(COMMIT, reportContext, report, rs, ss, rawVs)` to record the report onchain.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 852,
+          "end": 857
+        }
+      ],
+      "title": "",
+      "id": "37402"
+    },
+    {
+      "type": "textOnly",
+      "description": "This completes the **DON commit flow**: `RMN-protected` `merkle roots` are persisted with correct ordering, fresh price updates applied, and the report broadcast via **OCR’s Transmitted event**.",
+      "title": "",
+      "id": "37403"
+    }
+  ]
+}

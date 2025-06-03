@@ -1,0 +1,137 @@
+{
+  "title": "7.5: FeeQuoter: Message & Destination Validation",
+  "id": "rf73KguMx6ZO3dmSE3S6PYyeVPsLh1eGquMJpmkRTF0=",
+  "originalId": 3120,
+  "position": 39,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "A message reaches `FeeQuoter` through `getValidatedFee()`. Before any fee math is done, the helper `_validateMessageAndResolveGasLimitForDestination()` performs a layered, defensive parse that either:\n• returns a trustworthy `gasLimit`, or\n• reverts with a precise error.\nThe following tour walks through each layer.",
+      "title": "",
+      "id": "37271"
+    },
+    {
+      "type": "highlight",
+      "description": "First gate – universal size constraints.\nLines 1001-1006 check that the raw payload and token-count stay below the destination chain’s configured maxima.  A single malformed value triggers `MessageTooLarge` or `UnsupportedNumberOfTokens` immediately, stopping processing.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 997,
+          "end": 1012
+        }
+      ],
+      "title": "",
+      "id": "37272"
+    },
+    {
+      "type": "highlight",
+      "description": "Next, the function branches on `chainFamilySelector` (lines 1010–1024):\n\n- **EVM / Aptos / Sui**\n  - Delegate to `_parseGenericExtraArgsFromBytes()`\n  - Use the returned `gasLimit`\n\n- **SVM**\n  - Delegate to `_parseSVMExtraArgsFromBytes()`\n  - Extract `computeUnits` as `gasLimit`\n\nAfter parsing, call `_validateDestFamilyAddress()` to ensure the receiver bytes match the family’s rules.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 1010,
+          "end": 1029
+        }
+      ],
+      "title": "",
+      "id": "37273"
+    },
+    {
+      "type": "highlight",
+      "description": "SVM-specific decoder – _parseSVMExtraArgsFromBytes()\n\n- Rejects empty `extraArgs` → revert `InvalidExtraArgsData()` (lines 911–913)\n- Verifies `bytes4 tag == Client.SVM_EXTRA_ARGS_V1_TAG` → revert `InvalidExtraArgsTag()` (lines 915–918)\n- Decodes `Client.SVMExtraArgsV1` struct from payload (line 920)\n- If `enforceOutOfOrder` is true, requires `allowOutOfOrderExecution == true` → revert `ExtraArgOutOfOrderExecutionMustBeTrue()` (lines 922–924)\n- Ensures `computeUnits <= maxPerMsgGasLimit` → revert `MessageComputeUnitLimitTooHigh()` (lines 926–928)\n- Returns validated `svmExtraArgs` (line 930)",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 906,
+          "end": 930
+        }
+      ],
+      "title": "",
+      "id": "37274"
+    },
+    {
+      "type": "highlight",
+      "description": "- **Generic decoder** – `_parseGenericExtraArgsFromBytes()`:\n  - Calls unvalidated EVM decoder to parse `GenericExtraArgsV2` (lines 946–947).\n  - Ensures `parsedExtraArgs.gasLimit` ≤ `maxPerMsgGasLimit`, else reverts `MessageGasLimitTooHigh()` (lines 948–949).\n  - If `enforceOutOfOrder` is true, verifies `allowOutOfOrderExecution` is true, else reverts `ExtraArgOutOfOrderExecutionMustBeTrue()` (lines 951–955).\n  - Applies to EVM, Aptos & Sui destinations.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 936,
+          "end": 957
+        }
+      ],
+      "title": "",
+      "id": "37275"
+    },
+    {
+      "type": "highlight",
+      "description": "Fallback decoder – `_parseUnvalidatedEVMExtraArgsFromBytes()` (lines 969–983):\n- Empty `extraArgs`: return `GenericExtraArgsV2` with default values (`gasLimit = defaultTxGasLimit`, `allowOutOfOrderExecution = false`) (lines 969–971).\n- Tag `GENERIC_EXTRA_ARGS_V2_TAG`: decode full `Client.GenericExtraArgsV2` via `abi.decode` (lines 976–977).\n- Tag `EVM_EXTRA_ARGS_V1_TAG`: legacy path—decode `uint256 gasLimit` and set `allowOutOfOrderExecution = false` (lines 978–981).\n- Unknown tags: revert with `InvalidExtraArgsTag()` (line 983).",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 964,
+          "end": 983
+        }
+      ],
+      "title": "",
+      "id": "37276"
+    },
+    {
+      "type": "highlight",
+      "description": "Lines 883–903 perform per-family address validation by switching on the `chainFamilySelector`.\n\n1. **EVM**  \n   Calls into `Internal._validateEVMAddress` to enforce a proper Ethereum-style address.\n2. **SVM**  \n   Requires a 32-byte address, and if `gasLimit > 0` the address cannot be zero.\n3. **Aptos/Sui**  \n   Enforces that the address falls outside the reserved precompile space (`APTOS_PRECOMPILE_SPACE`).\n4. **Any other selector**  \n   Causes an `InvalidChainFamilySelector` revert.\n\nThis ensures each chain family’s destination format is checked before quoting.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 883,
+          "end": 903
+        }
+      ],
+      "title": "",
+      "id": "37277"
+    },
+    {
+      "type": "highlight",
+      "description": "- Validates that `encodedAddress.length` equals 32; reverts with `InvalidEVMAddress` if not (line 177).\n- Decodes the 32-byte input to a `uint256` (`encodedAddressUint`) (line 178).\n- Rejects the address if `encodedAddressUint` is below `EVM_PRECOMPILE_SPACE` (0–1023) or above `type(uint160).max`; reverts on failure (lines 179-180).",
+      "file": "chains/evm/contracts/libraries/Internal.sol",
+      "highlight": [
+        {
+          "start": 177,
+          "end": 180
+        }
+      ],
+      "title": "",
+      "id": "37278"
+    },
+    {
+      "type": "highlight",
+      "description": "`Internal._validate32ByteAddress()` is the 32-byte counterpart.  A caller passes a minimum allowed value; any encoded address smaller than that, or not 32 bytes long, reverts.",
+      "file": "chains/evm/contracts/libraries/Internal.sol",
+      "highlight": [
+        {
+          "start": 184,
+          "end": 193
+        }
+      ],
+      "title": "",
+      "id": "37279"
+    },
+    {
+      "type": "highlight",
+      "description": "Back in the SVM branch, extra SVM-only safeguards:\n\n- ensures account list length is consistent with writable bitmap (lines 1031-1059).\n- accumulates additional bytes contributed by messaging accounts, token overhead and per-token `destBytesOverhead` (lines 1047-1073).\n- enforces the expanded size against `maxDataBytes` (lines 1076-1077).\n\nIf any check fails, dedicated errors such as `TooManySVMExtraArgsAccounts` fire.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 1031,
+          "end": 1079
+        }
+      ],
+      "title": "",
+      "id": "37280"
+    },
+    {
+      "type": "textOnly",
+      "description": "Putting it all together:\n1. Universal limits stop obviously oversized messages.\n2. A family-specific decoder validates the `extraArgs` tag, required flags and gas/compute limits.\n3. The receiver address is checked against the family’s reserved ranges.\n4. **SVM** adds further account and byte-count validation.\nOnly when every layer passes does the function return a `gasLimit` that downstream fee computation can trust; otherwise, a clear revert explains why the message was rejected.",
+      "title": "",
+      "id": "37281"
+    }
+  ]
+}

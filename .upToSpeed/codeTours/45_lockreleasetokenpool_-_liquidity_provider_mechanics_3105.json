@@ -1,0 +1,111 @@
+{
+  "title": "4.5: LockReleaseTokenPool – Liquidity Provider Mechanics",
+  "id": "JXQ4fo1rOGygdR/62vmIEG6n8hWb7tHtmfivoUj2WYY=",
+  "originalId": 3105,
+  "position": 20,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Walk through the core parts of `LockReleaseTokenPool.sol` to see how it manages real ERC-20 liquidity and who is authorised to touch it.",
+      "title": "",
+      "id": "37058"
+    },
+    {
+      "type": "highlight",
+      "description": "Lines 13-18 announce that this contract is a **lock-and-release pool** and, on line 17, it **extends `TokenPool`**, inheriting all shared accounting and access-control logic.",
+      "file": "chains/evm/contracts/pools/LockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 13,
+          "end": 18
+        }
+      ],
+      "title": "",
+      "id": "37059"
+    },
+    {
+      "type": "highlight",
+      "description": "`_releaseOrMint` is the single abstract hook the pool must implement. Because the tokens already exist on this chain, the override is simply a `safeTransfer` – no minting or burning is required.",
+      "file": "chains/evm/contracts/pools/LockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 40,
+          "end": 42
+        }
+      ],
+      "title": "",
+      "id": "37060"
+    },
+    {
+      "type": "highlight",
+      "description": "A **dedicated rebalancer** address (line 30) can move liquidity in or out, while the `RebalancerSet` event (line 25) lets observers track any change.",
+      "file": "chains/evm/contracts/pools/LockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 22,
+          "end": 31
+        }
+      ],
+      "title": "",
+      "id": "37061"
+    },
+    {
+      "type": "highlight",
+      "description": "`setRebalancer` is protected by `onlyOwner`, so only the contract owner can rotate or disable the rebalancer. Both the old and new addresses are emitted, preserving an on-chain audit trail.",
+      "file": "chains/evm/contracts/pools/LockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 51,
+          "end": 60
+        }
+      ],
+      "title": "",
+      "id": "37062"
+    },
+    {
+      "type": "highlight",
+      "description": "`provideLiquidity` allows **the rebalancer** (line 68) to push tokens into the pool. On success, the tokens are transferred in (line 70) and a `LiquidityAdded` event is emitted.",
+      "file": "chains/evm/contracts/pools/LockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 63,
+          "end": 72
+        }
+      ],
+      "title": "",
+      "id": "37063"
+    },
+    {
+      "type": "highlight",
+      "description": "`withdrawLiquidity` is the mirror image. The same rebalancer can pull funds out, but only when the pool’s balance is sufficient (line 81) – otherwise **InsufficientLiquidity** is thrown.",
+      "file": "chains/evm/contracts/pools/LockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 74,
+          "end": 84
+        }
+      ],
+      "title": "",
+      "id": "37064"
+    },
+    {
+      "type": "highlight",
+      "description": "`transferLiquidity` is an **owner-only** helper for contract upgrades. It instructs an older pool to send tokens here, then records the move with `LiquidityTransferred` (line 104).",
+      "file": "chains/evm/contracts/pools/LockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 96,
+          "end": 105
+        }
+      ],
+      "title": "",
+      "id": "37065"
+    },
+    {
+      "type": "textOnly",
+      "description": "To summarise: a **lock-and-release pool** holds real `tokens`, relies on **external liquidity**, and **centralises all rebalancing power in a single address** that the `owner` can update. Everything else builds on this simple pattern.",
+      "title": "",
+      "id": "37066"
+    }
+  ]
+}

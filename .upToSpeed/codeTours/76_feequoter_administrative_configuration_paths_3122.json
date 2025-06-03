@@ -1,0 +1,98 @@
+{
+  "title": "7.6: FeeQuoter: Administrative Configuration Paths",
+  "id": "x/qjfmJ9gIxmwhkygLA1zSuSISjKd3lHdbVW8053bs0=",
+  "originalId": 3122,
+  "position": 40,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "We focus on every owner-only mutator inside `FeeQuoter.sol` so operators and auditors can map the whole governance surface and see the guard-rails each call enforces.",
+      "title": "",
+      "id": "37290"
+    },
+    {
+      "type": "highlight",
+      "description": "During deployment the constructor (lines 228-233) rejects a malformed StaticConfig and then delegates to the same helpers used later by owners (239-243).  All runtime checks you’ll meet next are therefore executed once at construction too.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 228,
+          "end": 244
+        }
+      ],
+      "title": "",
+      "id": "37291"
+    },
+    {
+      "type": "highlight",
+      "description": "applyFeeTokensUpdates is an `external onlyOwner` wrapper (431-436).  Its private helper iterates through removals (443-446) and additions (448-451), mutating an EnumerableSet and emitting FeeTokenRemoved / FeeTokenAdded.  A token can never enter or leave the fee list without an event.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 431,
+          "end": 453
+        }
+      ],
+      "title": "",
+      "id": "37292"
+    },
+    {
+      "type": "highlight",
+      "description": "`applyPremiumMultiplierWeiPerEthUpdates` (646-651) changes per-token premium multipliers.  The loop (658-663) writes a single mapping and emits `PremiumMultiplierWeiPerEthUpdated`, providing a clear audit trail with no hidden side-effects.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 646,
+          "end": 665
+        }
+      ],
+      "title": "",
+      "id": "37293"
+    },
+    {
+      "type": "highlight",
+      "description": "- Performs strict validation before touching storage:\n  - **Lines 852–854**: `minFeeUSDCents` must be less than `maxFeeUSDCents`.\n  - **Lines 856–858**: `destBytesOverhead` must be at least `Pool.CCIP_LOCK_OR_BURN_V1_RET_BYTES`.\n- Stores validated configs and emits `TokenTransferFeeConfigUpdated` (**Lines 861–863**).\n- Deletes custom configs and emits `TokenTransferFeeConfigDeleted` (**Lines 868–872**).",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 852,
+          "end": 872
+        }
+      ],
+      "title": "",
+      "id": "37294"
+    },
+    {
+      "type": "highlight",
+      "description": "Inspect the highlighted block (1196–1250). First, the function guards against invalid parameters—selectors can’t be zero, gas limits must sit within allowed bounds, and only recognized chain families are permitted; it reverts on any failure. Next, it chooses between two events—one for newly added chains and one for updates—before making the final write to storage. This pattern ensures both safety checks and on-chain visibility of governance changes.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 1225,
+          "end": 1249
+        }
+      ],
+      "title": "",
+      "id": "37295"
+    },
+    {
+      "type": "highlight",
+      "description": "`getStaticConfig` simply returns the immutable constructor values, allowing operators to verify `max fee cap`, `LINK address`, and `price-staleness threshold` without modifying state.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 1252,
+          "end": 1260
+        }
+      ],
+      "title": "",
+      "id": "37296"
+    },
+    {
+      "type": "textOnly",
+      "description": "Every governance entry-point is gated by `onlyOwner`, performs explicit sanity checks, and emits events. Together these functions form `FeeQuoter`’s complete on-chain governance surface.",
+      "title": "",
+      "id": "37297"
+    }
+  ]
+}

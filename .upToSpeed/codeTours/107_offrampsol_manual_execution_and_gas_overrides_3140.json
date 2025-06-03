@@ -1,0 +1,150 @@
+{
+  "title": "10.7: OffRamp.sol: Manual Execution & Gas Overrides",
+  "id": "LyQ8G7tdZ8cnMzKPpZh0hnMSyCbIweLTy7YiPoL4Qtg=",
+  "originalId": 3140,
+  "position": 59,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "The **DON** can abandon an execution batch, but anyone may revive it through `OffRamp.manuallyExecute()`.  We will follow that fallback route, focusing on the input contract, its guard-rails, the time gate, and the special revert behaviour that keeps the state machine healthy.",
+      "title": "",
+      "id": "37404"
+    },
+    {
+      "type": "highlight",
+      "description": "`manuallyExecute()` is driven by one override record per message.\n\n- `receiverExecutionGasLimit` lets the caller raise the gas forwarded to the receiver.\n- `tokenGasOverrides` lets the caller raise gas for each token transfer.\nA value of 0 means “do not override” for that field.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 141,
+          "end": 146
+        }
+      ],
+      "title": "",
+      "id": "37405"
+    },
+    {
+      "type": "highlight",
+      "description": "The entry point expects two parallel arrays: `reports[]` and `gasLimitOverrides[][]`. A brief comment above the signature reminds that the overrides mirror the report structure, outer index = report, inner index = message.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 271,
+          "end": 284
+        }
+      ],
+      "title": "",
+      "id": "37406"
+    },
+    {
+      "type": "highlight",
+      "description": "**First guard-rail:** every dimension must line up.  A mismatch between the outer arrays or any report’s inner arrays reverts with `ManualExecutionGasLimitMismatch`, preventing mis-aligned manual runs.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 287,
+          "end": 298
+        }
+      ],
+      "title": "",
+      "id": "37407"
+    },
+    {
+      "type": "highlight",
+      "description": "**Second guard-rail**: the caller may only increase\u00151 never decrease\u00151 the `gasLimit` for the receiver.  Lowering would let an attacker force an early **FAILURE** marking; therefore `newLimit < original gasLimit` is forbidden.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 300,
+          "end": 308
+        }
+      ],
+      "title": "",
+      "id": "37408"
+    },
+    {
+      "type": "highlight",
+      "description": "The same **“only higher”** rule applies to `tokenGasOverrides`. Each token in the message must have a corresponding override entry; any attempt to shrink a single token’s `destGasAmount` triggers `InvalidManualExecutionTokenGasOverride`.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 312,
+          "end": 326
+        }
+      ],
+      "title": "",
+      "id": "37409"
+    },
+    {
+      "type": "highlight",
+      "description": "After validation the function hands both reports and overrides to `_batchExecute()`, marking the remainder of the call path as a **manualExecution run**.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 330,
+          "end": 333
+        }
+      ],
+      "title": "",
+      "id": "37410"
+    },
+    {
+      "type": "highlight",
+      "description": "Inside `_executeSingleReport()` the `override` array length tells us whether this is the manual path. The bool `manualExecution` influences the later gating and revert policy.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 373,
+          "end": 380
+        }
+      ],
+      "title": "",
+      "id": "37411"
+    },
+    {
+      "type": "highlight",
+      "description": "`manualExecution` is permitted only when at least one of two conditions is met:\n1. The same message is already in **FAILURE**, or\n2. The commit containing the message is older than `permissionLessExecutionThresholdSeconds`.\nThe age test uses `block.timestamp` − `timestampCommitted` (line 457) against the `dynamicConfig` value.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 455,
+          "end": 466
+        }
+      ],
+      "title": "",
+      "id": "37412"
+    },
+    {
+      "type": "highlight",
+      "description": "Once the low-level call returns, a second **FAILURE** is not tolerated.  If originalState was already **FAILURE** and the manual attempt fails again, the whole transaction reverts with `ExecutionError`, surfacing the revert data to the caller.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 507,
+          "end": 516
+        }
+      ],
+      "title": "",
+      "id": "37413"
+    },
+    {
+      "type": "highlight",
+      "description": "`permissionLessExecutionThresholdSeconds` lives in DynamicConfig and can be adjusted by the contract owner, giving operators control over how long users must wait before they can step in.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 126,
+          "end": 131
+        }
+      ],
+      "title": "",
+      "id": "37414"
+    },
+    {
+      "type": "textOnly",
+      "description": "Take-aways\n- Input shape: `(reports[], gasLimitOverrides[][])` must match exactly.\n- Callers may only raise gas figures; lowering is blocked.\n- A manual run becomes legal once the **DON** already failed or after the configured timeout.\n- A second **FAILURE** during manual execution aborts the entire `tx`, ensuring users notice and preventing useless state churn.",
+      "title": "",
+      "id": "37415"
+    }
+  ]
+}

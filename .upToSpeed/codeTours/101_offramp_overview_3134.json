@@ -1,0 +1,138 @@
+{
+  "title": "10.1: OffRamp: Overview",
+  "id": "Ix81N8Ke1DUOWT/dvqct/0sc59sHLO7TgHpXklqt3ww=",
+  "originalId": 3134,
+  "position": 53,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This tour introduces the `OffRamp` component. You will meet its three Solidity sources and see where the public entry-points live inside `OffRamp.sol` so you can distinguish the commit path, the execution path, and the admin & read-only helpers.",
+      "title": "",
+      "id": "37379"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "chains/evm/contracts/offRamp/OffRamp.sol"
+      ],
+      "description": "The core contract.  `OffRamp` inherits `MultiOCR3Base` (line 32) and packs the logic for committing `Merkle roots`, executing messages and administering per-chain lanes.",
+      "title": "",
+      "id": "37380"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "chains/evm/contracts/offRamp/OffRampWithMessageTransformer.sol"
+      ],
+      "description": "A slim extension of `OffRamp` (line 10).  It only stores a transformer address and overrides one virtual hook so external logic can mutate each message before execution.",
+      "title": "",
+      "id": "37381"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "chains/evm/contracts/ocr/MultiOCR3Base.sol"
+      ],
+      "description": "**Shared OCR-3** plumbing: one `config` per `plugin` type, **signature-checked** `_transmit` (231-297) and a **fork-detection guard** (327-330).",
+      "title": "",
+      "id": "37382"
+    },
+    {
+      "type": "highlight",
+      "description": "Commit path – `commit()` is the public entry-point used by the **DON** to submit signed root & price reports.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 809,
+          "end": 818
+        }
+      ],
+      "title": "",
+      "id": "37383"
+    },
+    {
+      "type": "highlight",
+      "description": "Execution path (DON) – `execute()` decodes an execution report, runs `_batchExecute` and still forwards the bytes to `_transmit` with signature checking disabled.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 333,
+          "end": 341
+        }
+      ],
+      "title": "",
+      "id": "37384"
+    },
+    {
+      "type": "highlight",
+      "description": "**Execution path (manual)** – `manuallyExecute()` lets anyone retry messages with gas overrides while reusing the same `_batchExecute` helper.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 279,
+          "end": 289
+        }
+      ],
+      "title": "",
+      "id": "37385"
+    },
+    {
+      "type": "highlight",
+      "description": "**Admin** – `applySourceChainConfigUpdates()` lets the owner update per-source lane parameters.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 996,
+          "end": 1004
+        }
+      ],
+      "title": "",
+      "id": "37386"
+    },
+    {
+      "type": "highlight",
+      "description": "Admin – `setDynamicConfig()` swaps `FeeQuoter` / `interceptor` settings that affect runtime behaviour.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 1053,
+          "end": 1061
+        }
+      ],
+      "title": "",
+      "id": "37387"
+    },
+    {
+      "type": "highlight",
+      "description": "**Getter** – `getExecutionState()` exposes the per-message bitmap so clients can see whether a sequence number is untouched, in-progress, failed or succeeded.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 223,
+          "end": 237
+        }
+      ],
+      "title": "",
+      "id": "37388"
+    },
+    {
+      "type": "highlight",
+      "description": "More getters – `static config`, `dynamic config`, and `per-source lane config` are all publicly readable.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 956,
+          "end": 972
+        }
+      ],
+      "title": "",
+      "id": "37389"
+    },
+    {
+      "type": "textOnly",
+      "description": "You can now name the files and the top-level responsibilities of each:\n- `OffRamp.sol` — commit reports, execute messages, owner admin, read-only views.\n- `OffRampWithMessageTransformer` — thin wrapper that tweaks a message through a transformer before execution.\n- `MultiOCR3Base` — generic OCR-3 framework providing config storage, signature verification and fork-safety.",
+      "title": "",
+      "id": "37390"
+    }
+  ]
+}

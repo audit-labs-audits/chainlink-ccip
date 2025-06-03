@@ -1,0 +1,233 @@
+{
+  "title": "1.1: 🚀 CCIP EVM Contracts – Birds-Eye Tour",
+  "id": "M9VsjJfI1SMXZb8CsUs4LRKe+BRsMarTnSByBMnHfJY=",
+  "originalId": 3087,
+  "position": 1,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "All Solidity for Chainlink-CCIP sits under `chains/evm/contracts/`. Here you’ll find the **Router**, **OnRamp**, **OffRamp**, `pools/`, **FeeQuoter**, **NonceManager**, `rmn/`, `tokenAdminRegistry/`, `capability/`, `interfaces/`, `libraries/` plus example dApps.",
+      "title": "",
+      "id": "37634"
+    },
+    {
+      "type": "highlight",
+      "description": "The project README confirms that everything we study lives in contracts/ and sketches its three top-level parts.",
+      "file": "chains/evm/README.md",
+      "highlight": [
+        {
+          "start": 59,
+          "end": 66
+        }
+      ],
+      "title": "",
+      "id": "37635"
+    },
+    {
+      "type": "highlight",
+      "description": "Router is the universal entry & exit; it implements both `IRouter` (for OffRamps) and `IRouterClient` (for dApps).",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 24,
+          "end": 31
+        }
+      ],
+      "title": "",
+      "id": "37636"
+    },
+    {
+      "type": "highlight",
+      "description": "Inside `ccipSend` we see fee handling, token transfers to pools, and finally the hand-off to the lane-specific `OnRamp` via `forwardFromRouter`.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 124,
+          "end": 152
+        }
+      ],
+      "title": "",
+      "id": "37637"
+    },
+    {
+      "type": "highlight",
+      "description": "`OnRamp`’s header sets the stage: **it prices messages, locks/burns tokens and emits** `CCIPMessageSent`; **static & dynamic configs wire in** `FeeQuoter` **and** `NonceManager`.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 1,
+          "end": 30
+        }
+      ],
+      "title": "",
+      "id": "37638"
+    },
+    {
+      "type": "highlight",
+      "description": "`forwardFromRouter` re-quotes the fee, calls `Pool.lockOrBurn`, bumps the outbound nonce, and finally emits `CCIPMessageSent`.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 160,
+          "end": 188
+        }
+      ],
+      "title": "",
+      "id": "37639"
+    },
+    {
+      "type": "highlight",
+      "description": "OffRamp does the inverse job: verify `DON proofs`, release/mint tokens, and route the message back into the destination chain’s `Router`.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 1,
+          "end": 30
+        }
+      ],
+      "title": "",
+      "id": "37640"
+    },
+    {
+      "type": "highlight",
+      "description": "Deep inside `_executeSingleReport` a Merkle proof is verified; once valid, `Router.routeMessage` is invoked to deliver the payload.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 370,
+          "end": 380
+        }
+      ],
+      "title": "",
+      "id": "37641"
+    },
+    {
+      "type": "highlight",
+      "description": "Every concrete pool inherits `TokenPool` and must expose `lockOrBurn` / `releaseOrMint` while enforcing RMN checks, allow-lists and rate-limits.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 38,
+          "end": 45
+        }
+      ],
+      "title": "",
+      "id": "37642"
+    },
+    {
+      "type": "highlight",
+      "description": "`IPoolV1` defines the custody abstraction common to every pool family.",
+      "file": "chains/evm/contracts/interfaces/IPool.sol",
+      "highlight": [
+        {
+          "start": 11,
+          "end": 28
+        }
+      ],
+      "title": "",
+      "id": "37643"
+    },
+    {
+      "type": "highlight",
+      "description": "All fee mathematics originates in `FeeQuoter`; `OnRamps` and `Routers` consult `getValidatedFee` and `getTokenAndGasPrices` here.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 24,
+          "end": 33
+        }
+      ],
+      "title": "",
+      "id": "37644"
+    },
+    {
+      "type": "highlight",
+      "description": "`NonceManager` keeps the central replay-protection maps for outbound & inbound lanes.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 34,
+          "end": 41
+        }
+      ],
+      "title": "",
+      "id": "37645"
+    },
+    {
+      "type": "highlight",
+      "description": "`RMNProxy` is the repo-wide kill-switch; `Router`, `OnRamp`, `OffRamp` and `Pools` query it via `whenNotCursed` checks.",
+      "file": "chains/evm/contracts/rmn/RMNProxy.sol",
+      "highlight": [
+        {
+          "start": 24,
+          "end": 40
+        }
+      ],
+      "title": "",
+      "id": "37646"
+    },
+    {
+      "type": "highlight",
+      "description": "`Internal.MAX_RET_BYTES` is reused by `CallWithExactGas` to cap return-data and thwart data-bomb griefing.",
+      "file": "chains/evm/contracts/libraries/Internal.sol",
+      "highlight": [
+        {
+          "start": 14,
+          "end": 20
+        }
+      ],
+      "title": "",
+      "id": "37647"
+    },
+    {
+      "type": "highlight",
+      "description": "Destination dApps subclass `CCIPReceiver`; `ccipReceive` is the entry-point the Router will call after proof verification.",
+      "file": "chains/evm/contracts/applications/CCIPReceiver.sol",
+      "highlight": [
+        {
+          "start": 12,
+          "end": 40
+        }
+      ],
+      "title": "",
+      "id": "37648"
+    },
+    {
+      "type": "highlight",
+      "description": "The root `README` reminds us that an off-chain **Chainlink DON** bridges the `On/Off-Ramp` gap.",
+      "file": "README.md",
+      "highlight": [
+        {
+          "start": 23,
+          "end": 27
+        }
+      ],
+      "title": "",
+      "id": "37649"
+    },
+    {
+      "type": "textOnly",
+      "description": "**Happy-path recap:** `dApp` → `Router.ccipSend` → `OnRamp` → `Chainlink DON` → `OffRamp` → `Router.routeMessage` → `receiver.ccipReceive`.  Tokens traverse the pools in lock/burn → release/mint symmetry.",
+      "title": "",
+      "id": "37650"
+    },
+    {
+      "type": "textOnly",
+      "description": "Upcoming deep-dives: `Interfaces` & libraries (**2.x**), `RMN security` (**3.x**), `TokenPools` (**4.x**), `TokenAdminRegistry` (**5.x**), `Core flows` – Nonces, Fees, On/Off-Ramps, Router (**6-10**).",
+      "title": "",
+      "id": "37651"
+    },
+    {
+      "type": "textOnly",
+      "description": "Design motifs to watch: **interface-first coding**, **exact-gas wrappers**, **Merkle proofs**, **2-bit execution bitmaps**, **token & message rate-limits**.",
+      "title": "",
+      "id": "37652"
+    },
+    {
+      "type": "textOnly",
+      "description": "Next stop → `2.1 Interfaces directory overview`. Keep this mental map handy as we zoom into each subsystem.",
+      "title": "",
+      "id": "37653"
+    }
+  ]
+}

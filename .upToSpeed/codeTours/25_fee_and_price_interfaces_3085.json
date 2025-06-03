@@ -1,0 +1,189 @@
+{
+  "title": "2.5: Fee & Price Interfaces",
+  "id": "rrqPP4gc5n1v9WBORzIu73pNjnCtV0U4ETtSs4HfxZM=",
+  "originalId": 3085,
+  "position": 6,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Fees in `CCIP` are quoted in real-time USD terms and then converted into the user’s chosen fee token. This tour follows that data:\n\n- OnRamp ➜ `FeeQuoter.getValidatedFee`\n- Helpers normalise user input (`processMessageArgs` / `processPoolReturnData`)\n- Underlying price storage & getters in `PriceRegistry`\n- Oracle refresh path via `OffRamp.commit`\n\nAll prices are held as **“USD with 18 decimals”** – keep that scale in mind.",
+      "title": "",
+      "id": "36949"
+    },
+    {
+      "type": "highlight",
+      "description": "A send starts here. The `OnRamp` delegates pricing completely: line 505 calls `IFeeQuoter.getValidatedFee`, passing the user’s message.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 499,
+          "end": 510
+        }
+      ],
+      "title": "",
+      "id": "36950"
+    },
+    {
+      "type": "highlight",
+      "description": "`getValidatedFee` first enforces the `lane` & `token` lists (564-566).  It then pulls two core prices:\n- `feeTokenPrice` – latest USD price for the chosen token (571)\n- `packedGasPrice` – encoded dest-chain gas price (572)",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 556,
+          "end": 574
+        }
+      ],
+      "title": "",
+      "id": "36951"
+    },
+    {
+      "type": "highlight",
+      "description": "**Premium component**: if the message moves tokens `getTokenTransferCost` calculates per-token bps & fixed fees (`581`). Pure messages instead pay a flat network fee (`590`). The result is multiplied by an optional `premiumMultiplier` for this fee token (`594`).",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 575,
+          "end": 596
+        }
+      ],
+      "title": "",
+      "id": "36952"
+    },
+    {
+      "type": "highlight",
+      "description": "Execution cost is assembled:\n1. `destCallDataCost` – bytes-based gas (626-630)\n2. `totalDestChainGas` – overhead + token gas + calldata + user gasLimit (632-635)\n3. `dataAvailabilityCost` (not shown) is added when rollups need it.\nEverything is summed in 36-dec USD and divided by the 18-dec token price to yield the final fee (638-642).",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 631,
+          "end": 643
+        }
+      ],
+      "title": "",
+      "id": "36953"
+    },
+    {
+      "type": "highlight",
+      "description": "After quoting, `Router` calls `processMessageArgs`. It:\n- Converts any `fee token amount` to `LINK juels` (`1104-1109`)\n- Enforces a global max fee guard (`1111`)\n- Normalises `extraArgs` & resolves `tokenReceiver` (`1113-1115`)\n\nNothing here recalculates prices – it just validates & re-encodes.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 1086,
+          "end": 1116
+        }
+      ],
+      "title": "",
+      "id": "36954"
+    },
+    {
+      "type": "highlight",
+      "description": "`processPoolReturnData` runs once pools have replied. It caps `extraData` size (1168-1175), validates `dest token address` to family rules (1179-1182) and encodes the exact `destGasAmount` we already billed for (1183-1189).",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 1158,
+          "end": 1189
+        }
+      ],
+      "title": "",
+      "id": "36955"
+    },
+    {
+      "type": "highlight",
+      "description": "`getTokenPrice`: returns cached price if still fresh; otherwise falls back to the configured feed",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 250,
+          "end": 269
+        }
+      ],
+      "title": "",
+      "id": "36956"
+    },
+    {
+      "type": "highlight",
+      "description": "`_getValidatedTokenPrice` is the guard used everywhere else – it reverts when price or timestamp is zero, preventing unsupported tokens from slipping through.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 362,
+          "end": 368
+        }
+      ],
+      "title": "",
+      "id": "36957"
+    },
+    {
+      "type": "highlight",
+      "description": "Gas data lives beside token prices. `getDestinationChainGasPrice` (315-319) exposes the packed value, while `getTokenAndGasPrices` (322-334) returns both numbers after freshness checks.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 315,
+          "end": 334
+        }
+      ],
+      "title": "",
+      "id": "36958"
+    },
+    {
+      "type": "highlight",
+      "description": "`convertTokenAmount` rebases any amount through USD: `amount` * `price_from` / `price_to`, all in 18-dec USD, so overflow is only possible far beyond real-world sums.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 345,
+          "end": 356
+        }
+      ],
+      "title": "",
+      "id": "36959"
+    },
+    {
+      "type": "highlight",
+      "description": "`getFeeTokens` returns the current allowed fee-token set – the earlier validation step rejects anything outside this list.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 422,
+          "end": 425
+        }
+      ],
+      "title": "",
+      "id": "36960"
+    },
+    {
+      "type": "highlight",
+      "description": "`updatePrices` is the only write path for price storage. Authorised updaters push arrays of token & gas prices, each stored with the current block timestamp.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 459,
+          "end": 482
+        }
+      ],
+      "title": "",
+      "id": "36961"
+    },
+    {
+      "type": "highlight",
+      "description": "Where do those updates originate?  `OffRamp.commit` delivers batched OCR reports.  When `priceUpdates` are present (835-839) it calls `FeeQuoter.updatePrices` before any message roots are accepted.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 808,
+          "end": 841
+        }
+      ],
+      "title": "",
+      "id": "36962"
+    },
+    {
+      "type": "textOnly",
+      "description": "Recap\n\n- `FeeQuoter` stores USD prices and turns them into dynamic per-message fees via `getValidatedFee`.\n- `processMessageArgs` & `processPoolReturnData` standardise inputs so later contracts can trust them.\n- All read helpers live in `PriceRegistry` – centralising price & gas data for every chain.\n- `OffRamp.commit` is the oracle gateway, refreshing prices atomically with message proofs.\n\nThe abstraction cleanly separates volatile market data from deterministic fee maths, keeping user gas low while preserving accuracy across chains.",
+      "title": "",
+      "id": "36963"
+    }
+  ]
+}

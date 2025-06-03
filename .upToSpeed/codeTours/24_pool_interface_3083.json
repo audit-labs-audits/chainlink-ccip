@@ -1,0 +1,98 @@
+{
+  "title": "2.4: Pool Interface",
+  "id": "XkqfThC2BhBu6SYZnlHmR5tyZj+71VLHgo24uma23vQ=",
+  "originalId": 3083,
+  "position": 5,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "A pool is the custody abstraction used by the bridge. Every concrete implementation lives in `contracts/pools/*`, but on- and off-ramp contracts only need to understand one **interface**.",
+      "title": "",
+      "id": "36896"
+    },
+    {
+      "type": "highlight",
+      "description": "The interface declares itself IERC165-compatible (line 11).  This lets other contracts query pools at runtime and verify that they support the `CCIP_POOL_V1` interface.",
+      "file": "chains/evm/contracts/interfaces/IPool.sol",
+      "highlight": [
+        {
+          "start": 9,
+          "end": 12
+        }
+      ],
+      "title": "",
+      "id": "36897"
+    },
+    {
+      "type": "highlight",
+      "description": "Step 1 – `lockOrBurn`. Called on the source chain by an on-ramp. The pool must either lock escrowed tokens or burn them, then return metadata (`dest token address + local decimals`) packed in `Pool.LockOrBurnOutV1`.",
+      "file": "chains/evm/contracts/interfaces/IPool.sol",
+      "highlight": [
+        {
+          "start": 12,
+          "end": 17
+        }
+      ],
+      "title": "",
+      "id": "36898"
+    },
+    {
+      "type": "highlight",
+      "description": "Step 2 – `releaseOrMint`.  Executed on the destination chain by an off-ramp.  Lines 23-25 impose the **balance-delta invariant**: after the call, the receiver’s balance **must** have increased by exactly `destinationAmount`; otherwise the transaction reverts.",
+      "file": "chains/evm/contracts/interfaces/IPool.sol",
+      "highlight": [
+        {
+          "start": 19,
+          "end": 27
+        }
+      ],
+      "title": "",
+      "id": "36899"
+    },
+    {
+      "type": "highlight",
+      "description": "`isSupportedChain` lets governance or router logic ask whether a particular remote chain is configured for this pool.",
+      "file": "chains/evm/contracts/interfaces/IPool.sol",
+      "highlight": [
+        {
+          "start": 29,
+          "end": 34
+        }
+      ],
+      "title": "",
+      "id": "36900"
+    },
+    {
+      "type": "highlight",
+      "description": "`isSupportedToken` performs the same guard for **ERC-20** contracts, allowing a pool to whitelist one or more tokens while rejecting everything else.",
+      "file": "chains/evm/contracts/interfaces/IPool.sol",
+      "highlight": [
+        {
+          "start": 36,
+          "end": 41
+        }
+      ],
+      "title": "",
+      "id": "36901"
+    },
+    {
+      "type": "highlight",
+      "description": "Every concrete pool inherits the abstract `TokenPool`, which itself implements `IPoolV1` and most shared logic. Implementations only override `_lockOrBurn` and `_releaseOrMint` to provide token-model-specific mechanics.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 38,
+          "end": 42
+        }
+      ],
+      "title": "",
+      "id": "36902"
+    },
+    {
+      "type": "textOnly",
+      "description": "All concrete pools under `contracts/pools/*` must respect the same interface and the balance-delta invariant, ensuring uniform custody semantics across lock/release, burn/mint, and hybrid models.",
+      "title": "",
+      "id": "36903"
+    }
+  ]
+}

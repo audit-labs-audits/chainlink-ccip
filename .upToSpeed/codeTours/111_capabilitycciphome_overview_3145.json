@@ -1,0 +1,104 @@
+{
+  "title": "11.1: CapabilityCCIPHome: Overview",
+  "id": "v60ngeezfkBHtARc/+y8ms57cpZ8syKX5RJ5Dz0O7D8=",
+  "originalId": 3145,
+  "position": 63,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This short tour orients you inside the `CCIPHome contract` – the place where Cross-Chain Interoperability Protocol nodes store and update configuration.  You will just meet the main landmarks; deep dives come later.",
+      "title": "",
+      "id": "37538"
+    },
+    {
+      "type": "highlight",
+      "description": "Early in the file a detailed comment lays out a four-state life-cycle (`Init` → `Candidate` → `Active` → `Active&Candidate`) and the allowed transitions. Every `config-update` function later in the file enforces these rules.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 16,
+          "end": 67
+        }
+      ],
+      "title": "",
+      "id": "37539"
+    },
+    {
+      "type": "highlight",
+      "description": "The first storage bucket is a set of constants: a version string, a digest prefix, hard limits such as `MAX_NUM_ORACLES`, and the `ZERO_DIGEST` sentinel that marks an empty slot.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 141,
+          "end": 155
+        }
+      ],
+      "title": "",
+      "id": "37540"
+    },
+    {
+      "type": "highlight",
+      "description": "The second bucket holds mutable state: per-chain parameters, the list of configured chains, a double-buffer of configs for each **DON** & plugin type, and a pointer telling which of the two buffers is currently active.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 159,
+          "end": 175
+        }
+      ],
+      "title": "",
+      "id": "37541"
+    },
+    {
+      "type": "textOnly",
+      "description": "From here the contract’s logic splits into three functional clusters.  Below is one public entry-point from each cluster so you can recognise where those areas start.",
+      "title": "",
+      "id": "37542"
+    },
+    {
+      "type": "highlight",
+      "description": "Cluster 1 – capability-registry hook.  `beforeCapabilityConfigSet` is the single doorway that lets the external `Capabilities Registry` push encoded calls into `CCIPHome`.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 205,
+          "end": 214
+        }
+      ],
+      "title": "",
+      "id": "37543"
+    },
+    {
+      "type": "highlight",
+      "description": "Cluster 2 – config state-transitions.  `setCandidate` inserts a pending configuration, respecting the **state-machine** you saw earlier.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 330,
+          "end": 339
+        }
+      ],
+      "title": "",
+      "id": "37544"
+    },
+    {
+      "type": "highlight",
+      "description": "**Cluster 3 – per-chain parameters.** `applyChainConfigUpdates` lets the contract owner add or remove chain-specific settings that off-chain plugins depend on.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 573,
+          "end": 580
+        }
+      ],
+      "title": "",
+      "id": "37545"
+    },
+    {
+      "type": "textOnly",
+      "description": "Remember these checkpoints: the **state-machine** comment, the `constants` & `mappings` that back it, and the **three clusters** that expose its behaviour. With this map the rest of the `file` will feel much more familiar.",
+      "title": "",
+      "id": "37546"
+    }
+  ]
+}

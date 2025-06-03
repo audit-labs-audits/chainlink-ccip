@@ -1,0 +1,98 @@
+{
+  "title": "4.2: TokenPool – State & Constructor",
+  "id": "UqchcsGv3rOZwViQoOZq4WFBsFcjVCLjAnhd0cQXjJo=",
+  "originalId": 3152,
+  "position": 17,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Start with the `contract’s long-lived state` – the pieces every `transfer operation` will read or update.",
+      "title": "",
+      "id": "37654"
+    },
+    {
+      "type": "highlight",
+      "description": "In `TokenPool.sol` (lines 102–128), the contract’s storage layout is defined as follows:\n\n**Immutable variables:**\n- `i_token`: the ERC-20 token managed by this pool.\n- `i_tokenDecimals`: cached token decimals.\n- `i_rmnProxy`: address of the RMN oracle proxy.\n- `i_allowlistEnabled`: deploy-time flag for access control.\n\n**Mutable variables:**\n- `s_allowlist`: optional set of approved senders (if allow-list enabled).\n- `s_router`: router contract for on/off-ramps.\n- `s_remoteChainSelectors`: set of whitelisted chain IDs.\n- `s_remoteChainConfigs`: per-chain settings and rate limits.\n- `s_remotePoolAddresses`: map from pool address hash to raw address.\n- `s_rateLimitAdmin`: optional admin for rate limits.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 102,
+          "end": 128
+        }
+      ],
+      "title": "",
+      "id": "37655"
+    },
+    {
+      "type": "highlight",
+      "description": "In `TokenPool.sol` (lines 44–61), a set of custom Solidity errors declares the contract’s core invariants and provides clear revert messages. They fall into three main categories:\n\n- Access Control: `CallerIsNotARampOnRouter`, `SenderNotAllowed`, `Unauthorized`\n- Configuration Validation: `ZeroAddressNotAllowed`, `ChainAlreadyExists`, `InvalidSourcePoolAddress`, `InvalidToken`, `InvalidDecimalArgs`, `MismatchedArrayLengths`\n- Safety Checks: `OverflowDetected`, `CursedByRMN`\n\nDefining these errors upfront makes subsequent `require`/`revert` statements more informative and maintainable.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 44,
+          "end": 61
+        }
+      ],
+      "title": "",
+      "id": "37656"
+    },
+    {
+      "type": "highlight",
+      "description": "Constructor walk-through:\n1. Zero-address guard (line 130) prevents a useless deployment.\n2. Stores `token` & `RMN proxy` (131-133).\n3. If the token exposes `IERC20Metadata.decimals()`, the supplied `localTokenDecimals` **must** match (134-141).  This catches mis-configured pools before any funds move.\n4. Persists the `router` (144) – the contract that decides which ramps are trusted for each chain.\n5. Decide once‐for-all whether the pool is permissioned (146-148).  If yes, seed the allow-list immediately (149-150) so no extra writes are needed during a transfer.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 129,
+          "end": 151
+        }
+      ],
+      "title": "",
+      "id": "37657"
+    },
+    {
+      "type": "highlight",
+      "description": "Three tiny view functions expose the core configuration so other contracts and monitoring tools can verify they are interacting with the expected pool:\n\n- `getToken()` – returns the `ERC-20` instance.\n- `getRmnProxy()` – reveals the `RMN` proxy address used for curse checks.\n- `getRouter()` – shows which router mediates ramp permissions.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 160,
+          "end": 176
+        }
+      ],
+      "title": "",
+      "id": "37658"
+    },
+    {
+      "type": "highlight",
+      "description": "`supportsInterface` advertises three interfaces:\n\n- `Pool.CCIP_POOL_V1` – a constant selector shared by every CCIP pool.\n- `IPoolV1` – the high-level pool interface.\n- **IERC165** – standard **ERC-165** discovery.\n\nA caller can therefore reliably confirm it is talking to a v1-compatible pool on any chain.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 190,
+          "end": 196
+        }
+      ],
+      "title": "",
+      "id": "37659"
+    },
+    {
+      "type": "highlight",
+      "description": "How decimal metadata travels cross-chain:\n\n- **getTokenDecimals()** simply returns the cached local value – no external call.\n- **_encodeLocalDecimals()** ABI-encodes that value so it can accompany the burn/lock message.\n- **_parseRemoteDecimals()** unpacks the field on the destination side, with fallbacks and size checks that prevent malformed data or unrealistic values.\n\nThese helpers let **_calculateLocalAmount** scale the minted/released amount exactly, regardless of the remote token’s decimals.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 317,
+          "end": 341
+        }
+      ],
+      "title": "",
+      "id": "37660"
+    },
+    {
+      "type": "textOnly",
+      "description": "With **storage layout** and **constructor behaviour** in hand you are now ready to follow the hot-path functions that actually `lock`, `burn`, `release` and `mint tokens`.",
+      "title": "",
+      "id": "37661"
+    }
+  ]
+}

@@ -1,0 +1,130 @@
+{
+  "title": "5.3: TokenAdminRegistry.sol – Admin & Module Write Paths",
+  "id": "sORqy97fG0EgMWvbpv/jdr0G4oD3qe1AhlculvNFOoY=",
+  "originalId": 3108,
+  "position": 28,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "We will trace how a token’s administrator and pool settings are managed in TokenAdminRegistry, covering modifiers, state changes, event emissions, access controls, and registry-module management.\n\n1. onlyTokenAdmin modifier\n   - Applied to functions that change token state.\n   - Reverts if msg.sender ≠ current administrator for the token.\n\n2. setPool(address token, address pool)\n   - Guarded by onlyTokenAdmin.\n   - Validates that pool supports IPoolV1 (ERC-165 check).\n   - Updates internal mapping: poolOf[token] = pool.\n   - Emits PoolSet(token, pool).\n\n3. transferAdminRole(address token, address newAdmin)\n   - Guarded by onlyTokenAdmin.\n   - Sets pendingAdministrator[token] = newAdmin.\n   - Emits AdministratorProposed(token, newAdmin).\n\n4. acceptAdminRole(address token)\n   - Requires msg.sender == pendingAdministrator[token].\n   - Clears pendingAdministrator[token], sets tokenAdmin[token] = msg.sender.\n   - Emits AdministratorAccepted(token, msg.sender).\n\n5. proposeAdministrator(address token, address candidate)\n   - Callable by contract owner or any address where isRegistryModule[msg.sender] == true.\n   - Sets pendingAdministrator[token] = candidate.\n   - Emits AdministratorProposed(token, candidate).\n\n6. Registry-module management\n   - addRegistryModule(address module) and removeRegistryModule(address module) are owner-only.\n   - isRegistryModule(address) returns whether a module is whitelisted.\n   - Emits RegistryModuleAdded(module) or RegistryModuleRemoved(module).\n\nExample timeline:\n- Token deployment: owner or initial script sets tokenAdmin[token0] = OwnerA.\n- OwnerA calls proposeAdministrator(token0, AdminB). → AdministratorProposed(token0, AdminB).\n- AdminB calls acceptAdminRole(token0). → AdministratorAccepted(token0, AdminB).\n- AdminB calls setPool(token0, PoolX). → PoolSet(token0, PoolX).",
+      "title": "",
+      "id": "37191"
+    },
+    {
+      "type": "highlight",
+      "description": "`onlyTokenAdmin` is the registry’s main guard. Line 233 compares `msg.sender` with `s_tokenConfig[token].administrator`; any mismatch reverts with `OnlyAdministrator`. Everything that mutates a token’s config is wrapped in this modifier, so control stays with the current administrator.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 229,
+          "end": 237
+        }
+      ],
+      "title": "",
+      "id": "37192"
+    },
+    {
+      "type": "highlight",
+      "description": "`TokenConfig` (lines 35-38) holds `administrator`, `pendingAdministrator`, and `tokenPool`. A mapping at line 44 stores one struct per token while `s_tokens` tracks all configured tokens.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 34,
+          "end": 45
+        }
+      ],
+      "title": "",
+      "id": "37193"
+    },
+    {
+      "type": "highlight",
+      "description": "In `setPool()`, after passing the `onlyTokenAdmin` check, the function ensures you can only assign a pool that actually supports this token—unless you’re deliberately removing it by passing the **zero address**. Once the new pool address is written to storage, the function compares it to the previous value and, if they differ, emits a `PoolSet` event. This pattern both preserves data integrity and gives off-chain systems a clear, auditable record of any change.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 110,
+          "end": 129
+        }
+      ],
+      "title": "",
+      "id": "37194"
+    },
+    {
+      "type": "highlight",
+      "description": "The validation relies on every V1 pool exposing `isSupportedToken(token) → bool`.  A pool that returns `false` for the token will be rejected by `setPool`.",
+      "file": "chains/evm/contracts/interfaces/IPool.sol",
+      "highlight": [
+        {
+          "start": 36,
+          "end": 41
+        }
+      ],
+      "title": "",
+      "id": "37195"
+    },
+    {
+      "type": "highlight",
+      "description": "`transferAdminRole` is the first half of a two-step hand-over.  As `onlyTokenAdmin`, it can only be called by the current admin.  It writes the `pendingAdministrator` field (138) and broadcasts `AdministratorTransferRequested` (140-141) so observers know who might take over.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 131,
+          "end": 141
+        }
+      ],
+      "title": "",
+      "id": "37196"
+    },
+    {
+      "type": "highlight",
+      "description": "`acceptAdminRole` completes the process. Line 150 verifies the caller is exactly the `pendingAdministrator`; on success lines 154-156 promote the caller and clear the pending slot, finishing with **AdministratorTransferred** (157-158).",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 146,
+          "end": 158
+        }
+      ],
+      "title": "",
+      "id": "37197"
+    },
+    {
+      "type": "highlight",
+      "description": "`proposeAdministrator` bootstraps a brand-new token. Access is broader: lines 172-174 allow either the contract **owner** or any **whitelisted registry module**. It forbids zero addresses (175-177) and repeats the “not already registered” guard (178-183). The function sets the `pendingAdministrator`, adds the token to `s_tokens`, and emits the same `AdministratorTransferRequested` event (189-190).",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 171,
+          "end": 190
+        }
+      ],
+      "title": "",
+      "id": "37198"
+    },
+    {
+      "type": "highlight",
+      "description": "`isRegistryModule` (199-203) consults an `EnumerableSet`. The owner can grow or shrink that set via `addRegistryModule` (205-213) and `removeRegistryModule` (215-223); each successful change emits its own event for transparent governance.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 198,
+          "end": 223
+        }
+      ],
+      "title": "",
+      "id": "37199"
+    },
+    {
+      "type": "textOnly",
+      "description": "**Example timeline**\n1. Token X is deployed.\n2. Owner calls `addRegistryModule(M)` to whitelist module *M*.\n3. *M* calls `proposeAdministrator(X, A)` → `AdministratorTransferRequested` is emitted.\n4. Address *A* calls `acceptAdminRole(X)` and becomes administrator (event `AdministratorTransferred`).\n5. *A* calls `setPool(X, P)`; pool *P* must return `true` for X and `PoolSet` records the link.\nFrom now on *A* decides on transfers or can start another hand-over via `transferAdminRole`. ",
+      "title": "",
+      "id": "37200"
+    },
+    {
+      "type": "textOnly",
+      "description": "You have now seen every moving part: the `onlyTokenAdmin` access gate, the two-step admin transfer with its signalling events, pool validation against the `IPool` interface, and the owner-managed list of `registry modules`.  Together these mechanisms keep each token’s pool configuration both flexible and secure.",
+      "title": "",
+      "id": "37201"
+    }
+  ]
+}

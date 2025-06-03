@@ -1,0 +1,104 @@
+{
+  "title": "10.9: OffRampWithMessageTransformer: Extensibility Hook",
+  "id": "zHxvsF8XpJoOeDlAknTnkTApy8cOWw2d9n5UgP+zLTM=",
+  "originalId": 3143,
+  "position": 61,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "A **transformer** can inject extra logic into `OffRamp` by inheriting its `contract` and overriding one virtual callback. Nothing else in the complex execution pipeline needs to be touched.",
+      "title": "",
+      "id": "37506"
+    },
+    {
+      "type": "highlight",
+      "description": "The base contract declares a single extension point. By default it is a `no-op`, simply passing the message through.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 570,
+          "end": 576
+        }
+      ],
+      "title": "",
+      "id": "37507"
+    },
+    {
+      "type": "textOnly",
+      "description": "`OffRampWithMessageTransformer` keeps every other behaviour from its parent and just wires a plug-in.",
+      "title": "",
+      "id": "37508"
+    },
+    {
+      "type": "highlight",
+      "description": "One additional storage slot holds the transformer’s address; the constructor enforces a non-zero value while still delegating to the base `OffRamp` setup.",
+      "file": "chains/evm/contracts/offRamp/OffRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 9,
+          "end": 23
+        }
+      ],
+      "title": "",
+      "id": "37509"
+    },
+    {
+      "type": "highlight",
+      "description": "A cheap external getter exposes the current transformer.",
+      "file": "chains/evm/contracts/offRamp/OffRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 25,
+          "end": 29
+        }
+      ],
+      "title": "",
+      "id": "37510"
+    },
+    {
+      "type": "highlight",
+      "description": "The **owner-only setter** lets the **contract owner** hot-swap the component; the same `zero-address guard` protects against misconfiguration.",
+      "file": "chains/evm/contracts/offRamp/OffRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 31,
+          "end": 40
+        }
+      ],
+      "title": "",
+      "id": "37511"
+    },
+    {
+      "type": "highlight",
+      "description": "The whole functional change lives inside the overridden hook: it calls the `transformer`, returns the modified `message`, and wraps any `revert data` in the `standard error` so that **OffRamp**’s error surface stays consistent.",
+      "file": "chains/evm/contracts/offRamp/OffRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 42,
+          "end": 53
+        }
+      ],
+      "title": "",
+      "id": "37512"
+    },
+    {
+      "type": "highlight",
+      "description": "The transformer interface is intentionally minimal – just two `transform` functions and the shared error type that the `OffRamp` wrapper propagates.",
+      "file": "chains/evm/contracts/interfaces/IMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 8,
+          "end": 30
+        }
+      ],
+      "title": "",
+      "id": "37513"
+    },
+    {
+      "type": "textOnly",
+      "description": "No other `OffRamp` method is overridden, so **batching**, **proof verification**, **gas accounting**, and **token release logic** all execute exactly as before. This highlights how new cross-chain features can be bolted on through a single, well-placed hook.",
+      "title": "",
+      "id": "37514"
+    }
+  ]
+}

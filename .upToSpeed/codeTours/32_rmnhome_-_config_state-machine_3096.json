@@ -1,0 +1,202 @@
+{
+  "title": "3.2: RMNHome – Config State-Machine",
+  "id": "SpFDy1YGRpCT08k3tzWeLXExIHYciosAFdXhngiAo4s=",
+  "originalId": 3096,
+  "position": 13,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "We already saw where `RMNHome` lives; this tour zooms into its **state-machine, data layout, and validation rules** so you can read the contract with confidence.",
+      "title": "",
+      "id": "37598"
+    },
+    {
+      "type": "highlight",
+      "description": "The preamble sketches a finite-state machine driven by two `bytes32` digests.\n\n- Init (lines 10–13): both digests zero `\\[0,0\\]`.\n- Candidate (lines 14–16): a new candidate, no active config `\\[0,1\\]`.\n- Active (lines 17–19): active config only, no candidate `\\[1,0\\]`.\n- ActiveAndCandidate (lines 20–22): both slots populated `\\[1,1\\]`.\n\nLines 23–34 list the only allowed state transitions; any other call reverts.",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 8,
+          "end": 34
+        }
+      ],
+      "title": "",
+      "id": "37599"
+    },
+    {
+      "type": "highlight",
+      "description": "Low-level ingredients.\n\n- `Node` (77-80) carries the p2p `peerId` and the off-chain signing key.\n- `SourceChain` (82-86) maps a `chainSelector` to a bitmap of observer nodes and its fault parameter `fObserve`.",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 77,
+          "end": 86
+        }
+      ],
+      "title": "",
+      "id": "37600"
+    },
+    {
+      "type": "highlight",
+      "description": "Static versus dynamic halves of a configuration.\n\n1. `StaticConfig` (88–93) freezes the `Node[]` list for the life of the config.\n2. `DynamicConfig` (95–99) can be patched later; its `SourceChain[]` bitmaps reference indices in the static nodes.",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 88,
+          "end": 99
+        }
+      ],
+      "title": "",
+      "id": "37601"
+    },
+    {
+      "type": "highlight",
+      "description": "`VersionedConfig` bundles `version`, `configDigest`, and both config halves; only two of these structs ever live on-chain simultaneously.",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 101,
+          "end": 108
+        }
+      ],
+      "title": "",
+      "id": "37602"
+    },
+    {
+      "type": "highlight",
+      "description": "**Double-buffer layout.**\n\n- Line 125 – fixed array `s_configs[2]` holds *active* and *candidate*.\n- Line 134 – `s_activeConfigIndex` tells which slot (0 or 1) is active; the other slot is implicitly the candidate.\n\nThis avoids costly struct copies when promoting.",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 117,
+          "end": 135
+        }
+      ],
+      "title": "",
+      "id": "37603"
+    },
+    {
+      "type": "highlight",
+      "description": "Helper getters keep the index math tiny:\n`_getActiveIndex()` → `s_activeConfigIndex`.\n`_getCandidateIndex()` → `s_activeConfigIndex ^ 1`.",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 324,
+          "end": 330
+        }
+      ],
+      "title": "",
+      "id": "37604"
+    },
+    {
+      "type": "highlight",
+      "description": "Promotion flips the buffer with one opcode (282):\n`s_activeConfigIndex ^= 1;   // 0 ↔ 1`",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 280,
+          "end": 284
+        }
+      ],
+      "title": "",
+      "id": "37605"
+    },
+    {
+      "type": "highlight",
+      "description": "`setCandidate()` populates / overwrites the candidate slot.\n1. Full validation (209).\n2. Digests must match caller’s `digestToOverwrite` (213-216).\n3. Emits `CandidateConfigRevoked` if replacing (217-220).\n4. Bumps `s_currentVersion`, computes digest (222-224).\n5. Writes into candidate slot and emits `ConfigSet` (225-232).",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 198,
+          "end": 234
+        }
+      ],
+      "title": "",
+      "id": "37606"
+    },
+    {
+      "type": "highlight",
+      "description": "`revokeCandidate()` lets the owner delete a bad candidate early.\nAfter digest matching (247-250) it *only* clears the digest (256).  The bulky struct data stays, making later overwrites cheap.",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 236,
+          "end": 257
+        }
+      ],
+      "title": "",
+      "id": "37607"
+    },
+    {
+      "type": "highlight",
+      "description": "promoteCandidateAndRevokeActive(): key state switch\n- Guard against no-op (lines 266–268)\n- Check candidate & active digests (270–277)\n- Update storage: delete old digest & flip index (280–282)\n- Emit events: ActiveConfigRevoked, ConfigPromoted (283–287)",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 259,
+          "end": 288
+        }
+      ],
+      "title": "",
+      "id": "37608"
+    },
+    {
+      "type": "highlight",
+      "description": "`setDynamicConfig()` patches the dynamic half in place.\nIt scans both slots (295-303); once the digest matches, it re-validates against the *current* node count, writes, and emits `DynamicConfigSet`.",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 290,
+          "end": 307
+        }
+      ],
+      "title": "",
+      "id": "37609"
+    },
+    {
+      "type": "highlight",
+      "description": "`_validateStaticAndDynamicConfig()` adds high-level sanity checks:\n- Node count ≤ 256 (lines 343–345)\n- No duplicate `peerId` or `offchainPublicKey` (lines 348–357)\n\nThen it defers to the dynamic validator.",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 336,
+          "end": 361
+        }
+      ],
+      "title": "",
+      "id": "37610"
+    },
+    {
+      "type": "highlight",
+      "description": "`_validateDynamicConfig()` enforces per-chain rules:\n- every `chainSelector` unique (370-375).\n- bitmaps point only at existing nodes (377-383).\n- observer count ≥ 2f+1 (384-392).",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 363,
+          "end": 393
+        }
+      ],
+      "title": "",
+      "id": "37611"
+    },
+    {
+      "type": "highlight",
+      "description": "Digest correctness.\n\n`_calculateConfigDigest()` hashes `['EVM', chainid, this, version, staticConfig]` and ORs in a 16-bit prefix.\n\nBecause **only the static blob participates**, later dynamic tweaks leave the digest unchanged, letting remotes rely on the digest for immutable assumptions.",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 309,
+          "end": 321
+        }
+      ],
+      "title": "",
+      "id": "37612"
+    },
+    {
+      "type": "textOnly",
+      "description": "You now have the blueprint: two slots, four observable states, strict transition functions, and a digest derived entirely from static data.  With these pieces you can trace any `config`’s life-cycle from candidate to active to retirement while trusting its structural integrity.",
+      "title": "",
+      "id": "37613"
+    }
+  ]
+}

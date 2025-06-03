@@ -1,0 +1,92 @@
+{
+  "title": "6.2: Outbound Nonce Flow",
+  "id": "E3C+xmUdTrwpLgJrMnTk0niQtNE4V98sNtmTkW5PEN4=",
+  "originalId": 3115,
+  "position": 33,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Follow a message as it asks the `NonceManager` for its **next outbound nonce**.  We will start at the public entry point, dive into the lookup logic (including the upgrade-aware fallback), and finish where the new value is written back to storage.",
+      "title": "",
+      "id": "37133"
+    },
+    {
+      "type": "highlight",
+      "description": "The journey begins in `getIncrementedOutboundNonce`.\n\n- Line 51 applies `onlyAuthorizedCallers`, so only on/off-ramps can reach the state-mutating logic.\n- Line 52 reads the current outbound nonce via `_getOutboundNonce` and adds 1, holding the incremented value in memory for a moment.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 48,
+          "end": 56
+        }
+      ],
+      "title": "",
+      "id": "37134"
+    },
+    {
+      "type": "highlight",
+      "description": "That nonce resides in `s_outboundNonces` – a two-key mapping indexed by (`destChainSelector`, `sender`).  This is the exact storage slot about to be updated.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 36,
+          "end": 38
+        }
+      ],
+      "title": "",
+      "id": "37135"
+    },
+    {
+      "type": "highlight",
+      "description": "`_getOutboundNonce` first performs a plain lookup.  If the mapping already holds a value (non-zero) we return it immediately, preserving the existing sequence.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 66,
+          "end": 71
+        }
+      ],
+      "title": "",
+      "id": "37136"
+    },
+    {
+      "type": "highlight",
+      "description": "When the `lookup` returns 0 we may be dealing with a brand-new `NonceManager` that replaced an older on-ramp. The code therefore consults the previous on-ramp (`prevOnRamp.getSenderNonce`) so that numbering continues seamlessly across upgrades.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 71,
+          "end": 77
+        }
+      ],
+      "title": "",
+      "id": "37137"
+    },
+    {
+      "type": "highlight",
+      "description": "`getSenderNonce` is declared as a **pure view** on the on-ramp interface. Using it in the `fallback` is safe because it cannot mutate state and returns exactly the nonce we need for sequencing.",
+      "file": "chains/evm/contracts/interfaces/IEVM2AnyOnRamp.sol",
+      "highlight": [
+        {
+          "start": 11,
+          "end": 16
+        }
+      ],
+      "title": "",
+      "id": "37138"
+    },
+    {
+      "type": "highlight",
+      "description": "Back in `getIncrementedOutboundNonce` the freshly incremented number is stored (line 53).  From now on every outbound call for this (destChain, sender) pair will observe the updated counter.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 52,
+          "end": 54
+        }
+      ],
+      "title": "",
+      "id": "37139"
+    }
+  ]
+}

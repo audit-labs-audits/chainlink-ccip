@@ -1,0 +1,98 @@
+{
+  "title": "4.10: USDC Support Contracts – MessageTransmitterProxy & Interfaces",
+  "id": "86TxXPv2wSWzSzTf+M344Y8zD/NJ1brohvmvu9gfqUA=",
+  "originalId": 3106,
+  "position": 25,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "`CCIP` never talks to `Circle`’s `MessageTransmitter` directly; every call is routed through a tiny proxy that `CCIP`’s contracts own and configure.  This walkthrough shows how that proxy is wired-up, how it defends its entry-point, and how it stays agnostic to future upgrades on either side.",
+      "title": "",
+      "id": "37024"
+    },
+    {
+      "type": "highlight",
+      "description": "The proxy’s only piece of persistent state is an **immutable** pointer to Circle’s `MessageTransmitter` (line 32).  At deployment it is discovered once from the `TokenMessenger` the pool already knows (lines 38-41), so the address never needs to be configured manually and can’t be changed later.",
+      "file": "chains/evm/contracts/pools/USDC/CCTPMessageTransmitterProxy.sol",
+      "highlight": [
+        {
+          "start": 31,
+          "end": 42
+        }
+      ],
+      "title": "",
+      "id": "37025"
+    },
+    {
+      "type": "highlight",
+      "description": "`receiveMessage` is the single externally-facing function CCIP relies on.  Before forwarding anything, it checks an `EnumerableSet` allow-list (line 50) and reverts with an explicit **Unauthorized** error if the caller is not present.  If the guard passes, the call is forwarded verbatim to `Circle`’s contract (line 53) — no mutation, no additional logic.",
+      "file": "chains/evm/contracts/pools/USDC/CCTPMessageTransmitterProxy.sol",
+      "highlight": [
+        {
+          "start": 44,
+          "end": 54
+        }
+      ],
+      "title": "",
+      "id": "37026"
+    },
+    {
+      "type": "highlight",
+      "description": "Only the proxy owner may edit that `allow-list`. Each `array entry` says whether a given `address` should be added or removed; the `function` loops through them, updating the `set` and emitting `events` so off-chain observers have a concise audit trail.",
+      "file": "chains/evm/contracts/pools/USDC/CCTPMessageTransmitterProxy.sol",
+      "highlight": [
+        {
+          "start": 56,
+          "end": 72
+        }
+      ],
+      "title": "",
+      "id": "37027"
+    },
+    {
+      "type": "highlight",
+      "description": "Two view helpers let anyone inspect the guard: `isAllowedCaller` performs a single membership test, while `getAllowedCallers` exposes the full set — useful for dashboards or governance tooling without diluting the `receiveMessage` path with extra storage reads.",
+      "file": "chains/evm/contracts/pools/USDC/CCTPMessageTransmitterProxy.sol",
+      "highlight": [
+        {
+          "start": 74,
+          "end": 87
+        }
+      ],
+      "title": "",
+      "id": "37028"
+    },
+    {
+      "type": "highlight",
+      "description": "This is the `Circle` interface the proxy ultimately targets. `receiveMessage` unlocks bridged USDC once its attestation is proven, and `localDomain` returns the numeric domain ID for this chain — a constant many components need when building or validating **CCTP** messages.",
+      "file": "chains/evm/contracts/pools/USDC/interfaces/IMessageTransmitter.sol",
+      "highlight": [
+        {
+          "start": 18,
+          "end": 41
+        }
+      ],
+      "title": "",
+      "id": "37029"
+    },
+    {
+      "type": "highlight",
+      "description": "Earlier, the pool burned USDC by calling `depositForBurnWithCaller` on the same `TokenMessenger`. That interface also exposes `localMessageTransmitter()`, which the `proxy constructor` used to find the transmitter address without any hard-coding.",
+      "file": "chains/evm/contracts/pools/USDC/interfaces/ITokenMessenger.sol",
+      "highlight": [
+        {
+          "start": 48,
+          "end": 55
+        }
+      ],
+      "title": "",
+      "id": "37030"
+    },
+    {
+      "type": "textOnly",
+      "description": "Circle’s `IMessageTransmitter` and `ITokenMessenger` live in their own upgrade domain; `Chainlink`’s contracts just import the interfaces.  By placing this minimal, owner-controlled proxy between the two systems, `CCIP` can evolve its access controls while `Circle` can upgrade its bridge logic — without either side redeploying or re-auditing the other.",
+      "title": "",
+      "id": "37031"
+    }
+  ]
+}

@@ -1,0 +1,85 @@
+{
+  "title": "6.1: NonceManager: Overview",
+  "id": "Tk3c9pficMaXa9WrvigOJnMTwF+mva0lHMyxaRXr+Vo=",
+  "originalId": 3113,
+  "position": 32,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "`NonceManager` centralises every outbound and inbound message nonce for all cross-chain **lanes**.  By moving this state into one contract it frees the on-ramp / off-ramp pair to focus on transport while still enforcing strict message ordering.  The next stops in the walkthrough map out its surface and persistence.",
+      "title": "",
+      "id": "37100"
+    },
+    {
+      "type": "highlight",
+      "description": "Lines 10–12 declare NonceManager inheriting INonceManager, AuthorizedCallers, and ITypeAndVersion—a dedicated, access-controlled module for centralized nonce bookkeeping with a minimal public interface and on-chain versioning.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 10,
+          "end": 12
+        }
+      ],
+      "title": "",
+      "id": "37101"
+    },
+    {
+      "type": "highlight",
+      "description": "Defines a `PreviousRampAlreadySet()` error to prevent duplicate migration setup, plus two events—`PreviousRampsUpdated` (migration data pushed) and `SkippedIncorrectNonce` (out-of-order nonce skipped)—for upgrade and ordering observability.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 13,
+          "end": 17
+        }
+      ],
+      "title": "",
+      "id": "37102"
+    },
+    {
+      "type": "highlight",
+      "description": "These structs exist only for a one-time upgrade path.  `PreviousRamps` keeps the addresses of the *old* on- and off-ramp; `PreviousRampsArgs` adds the chain selector and an override flag so the owner can provide an array of migration instructions in a single transaction.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 19,
+          "end": 30
+        }
+      ],
+      "title": "",
+      "id": "37103"
+    },
+    {
+      "type": "highlight",
+      "description": "Core storage lives in three mappings:\n\n- `s_previousRamps` (line 35): Per-chain snapshot of pre-upgrade ramps (read-only after migration).\n- `s_outboundNonces` (line 37): Next outbound nonce per (destChainSelector, sender). On-ramps call `getIncrementedOutboundNonce` to bump this.\n- `s_inboundNonces` (line 41): Next inbound nonce per (sourceChainSelector, sender). Off-ramps call `incrementInboundNonce`, incrementing only when the expected ordering holds.\n\nThese ensure every lane progresses monotonically and in lock-step across chains.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 34,
+          "end": 41
+        }
+      ],
+      "title": "",
+      "id": "37104"
+    },
+    {
+      "type": "highlight",
+      "description": "The implementation fulfils this **minimal interface**. Callers never need to know about structs or storage—only two methods:\n\n- `getIncrementedOutboundNonce` returns & stores the next outbound nonce.\n- `incrementInboundNonce` attempts to store the next inbound nonce, but only if it matches the caller-supplied `expectedNonce` (ordering guard).\n\nAny contract that touches nonces should depend on this `interface`, keeping the rest of the system decoupled.",
+      "file": "chains/evm/contracts/interfaces/INonceManager.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 23
+        }
+      ],
+      "title": "",
+      "id": "37105"
+    },
+    {
+      "type": "textOnly",
+      "description": "You now know what `NonceManager` is, where it lives, the state it maintains, and the single-purpose interface that ramps use to keep message order intact\r\n\r\n\r\neven during a migration from older ramps.",
+      "title": "",
+      "id": "37106"
+    }
+  ]
+}

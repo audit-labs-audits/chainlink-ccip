@@ -1,0 +1,169 @@
+{
+  "title": "4.9: HybridLockReleaseUSDCTokenPool – Dual Mode & Migration",
+  "id": "MIqjGHPK0b2cF03nchvhq8XOms5kSI46yJlEQIFeShE=",
+  "originalId": 3102,
+  "position": 24,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "The hybrid `USDC` pool combines `burn-mint` (**CCTP**) with a lock-release fallback. A single `4-byte flag` travels in `CCIP` messages to tell the destination which path to follow; `on-chain state` controls when each `chain selector` is switched and how migrations are executed. We will walk through the key pieces.",
+      "title": "",
+      "id": "37076"
+    },
+    {
+      "type": "highlight",
+      "description": "`bytes4 constant LOCK_RELEASE_FLAG` is the magic value placed into `destPoolData`/`sourcePoolData`. When a hybrid pool receives a message that carries this flag it will run the lock-release sub-routine instead of the default **CCTP** burn-mint path.",
+      "file": "chains/evm/contracts/pools/USDC/HybridLockReleaseUSDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 19,
+          "end": 21
+        }
+      ],
+      "title": "",
+      "id": "37077"
+    },
+    {
+      "type": "highlight",
+      "description": "A standard **BurnMint** pool on a non-CCTP chain overrides `lockOrBurn` (28-46). After burning it returns `destPoolData = abi.encode(LOCK_RELEASE_FLAG)` so the hybrid pool at the other end knows to release already-locked canonical USDC.",
+      "file": "chains/evm/contracts/pools/USDC/BurnMintWithLockReleaseFlagTokenPool.sol",
+      "highlight": [
+        {
+          "start": 24,
+          "end": 46
+        }
+      ],
+      "title": "",
+      "id": "37078"
+    },
+    {
+      "type": "highlight",
+      "description": "**Hybrid** keeps a per-chain selector switch (239-241).  The owner sets `s_shouldUseLockRelease[selector]`; `shouldUseLockRelease()` is consulted for every message.",
+      "file": "chains/evm/contracts/pools/USDC/HybridLockReleaseUSDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 235,
+          "end": 242
+        }
+      ],
+      "title": "",
+      "id": "37079"
+    },
+    {
+      "type": "highlight",
+      "description": "This override of `lockOrBurn` first checks whether the hybrid lock-release path is enabled for the target chain. If it isn’t, it simply falls back to the parent implementation. Next, it guards against new outgoing messages on any chain that has been paused for the ongoing USDC CCTP migration, reverting if that chain selector matches. If neither of those conditions applies, control proceeds into the hybrid lock-and-release flow via `_lockReleaseOutgoingMessage`.",
+      "file": "chains/evm/contracts/pools/USDC/HybridLockReleaseUSDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 66,
+          "end": 83
+        }
+      ],
+      "title": "",
+      "id": "37080"
+    },
+    {
+      "type": "highlight",
+      "description": "`_lockReleaseOutgoingMessage` (87–104) performs the alternative path:\n\n- Security check (89).  \n- Increments `s_lockedTokensByChainSelector` (92–93) for future accounting.  \n- Emits standard `LockedOrBurned` event.  \n- Returns `destPoolData` encoded with `LOCK_RELEASE_FLAG` so the remote pool will ‘release’. ",
+      "file": "chains/evm/contracts/pools/USDC/HybridLockReleaseUSDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 85,
+          "end": 104
+        }
+      ],
+      "title": "",
+      "id": "37081"
+    },
+    {
+      "type": "highlight",
+      "description": "**releaseOrMint override** (110-123):\n- Inspects `sourcePoolData`; if it does not equal the **flag**, it falls back to `super` for minting.\n- When the **flag** is present, it invokes `_lockReleaseIncomingMessage()`.",
+      "file": "chains/evm/contracts/pools/USDC/HybridLockReleaseUSDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 107,
+          "end": 123
+        }
+      ],
+      "title": "",
+      "id": "37082"
+    },
+    {
+      "type": "highlight",
+      "description": "`_lockReleaseIncomingMessage` (127\u0013155):\n- Validates and again enforces the migration pause (131\u0013135).\n- Adjusts the correct accounting bucket\u00151either `locked` or `excluded`\u0015 then calls `safeTransfer` on the canonical USDC to the receiver (141\u0013148).\n- Emits `ReleasedOrMinted` and returns (149\u0013155).",
+      "file": "chains/evm/contracts/pools/USDC/HybridLockReleaseUSDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 125,
+          "end": 158
+        }
+      ],
+      "title": "",
+      "id": "37083"
+    },
+    {
+      "type": "highlight",
+      "description": "`updateChainSelectorMechanisms` (248-261) lets the owner turn LR off/on. Turning it off deletes the flag entry; turning it on first ensures the chain has not already migrated, then marks it and emits events.",
+      "file": "chains/evm/contracts/pools/USDC/HybridLockReleaseUSDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 244,
+          "end": 262
+        }
+      ],
+      "title": "",
+      "id": "37084"
+    },
+    {
+      "type": "highlight",
+      "description": "proposeCCTPMigration (86-98) records the selector that will migrate, verifies no pending proposal and that the lane is currently `LR`.  The selector is simultaneously used by the hybrid pool to pause new messages, protecting supply invariants.",
+      "file": "chains/evm/contracts/pools/USDC/USDCBridgeMigrator.sol",
+      "highlight": [
+        {
+          "start": 80,
+          "end": 98
+        }
+      ],
+      "title": "",
+      "id": "37085"
+    },
+    {
+      "type": "highlight",
+      "description": "**burnLockedUSDC** (53-77):\n- Only the `Circle migrator` can call.\n- Burns locked canonical USDC backing the non-canonical supply (70-71).\n- Automatically disables `LR` for that chain and records it in `s_migratedChains` (73-76).",
+      "file": "chains/evm/contracts/pools/USDC/USDCBridgeMigrator.sol",
+      "highlight": [
+        {
+          "start": 53,
+          "end": 77
+        }
+      ],
+      "title": "",
+      "id": "37086"
+    },
+    {
+      "type": "highlight",
+      "description": "`excludeTokensFromBurn` (145-158) lets the owner subtract amounts sitting in undelivered messages; this maintains **1:1** before the final burn.",
+      "file": "chains/evm/contracts/pools/USDC/USDCBridgeMigrator.sol",
+      "highlight": [
+        {
+          "start": 145,
+          "end": 158
+        }
+      ],
+      "title": "",
+      "id": "37087"
+    },
+    {
+      "type": "textOnly",
+      "description": "Throughout migration the lane is ‘supply-locked’.  Any attempt to send or receive while `s_proposedUSDCMigrationChain` equals the selector reverts with `LanePausedForCCTPMigration` (seen in the earlier snippets).  This guarantees the burn amount exactly matches outstanding wrapped supply.",
+      "title": "",
+      "id": "37088"
+    },
+    {
+      "type": "textOnly",
+      "description": "You now have the full picture: the `LOCK_RELEASE_FLAG` routes messages, the hybrid pool’s per-selector switch chooses the mechanism, and `USDCBridgeMigrator` yields a safe one-time transition from lock-release to native `CCTP` without breaking supply parity.",
+      "title": "",
+      "id": "37089"
+    }
+  ]
+}

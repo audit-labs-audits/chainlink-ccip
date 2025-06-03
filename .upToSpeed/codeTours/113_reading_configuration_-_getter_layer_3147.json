@@ -1,0 +1,98 @@
+{
+  "title": "11.3: Reading Configuration – Getter Layer",
+  "id": "dMW4Kai2Nu+i7YSUysmRLCdPozpJMODORsDo4snpwIY=",
+  "originalId": 3147,
+  "position": 65,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This tour focuses on the read-side helpers exposed by `CCIPHome`, enabling off-chain components to retrieve active and pending configurations. It examines how a two-slot ring buffer (`MAX_CONCURRENT_CONFIGS` = 2) is accessed via index helper functions.",
+      "title": "",
+      "id": "37498"
+    },
+    {
+      "type": "highlight",
+      "description": "`getConfigDigests` is the light-weight entry point.\nIt simply reads the digest fields stored at the *active* and *candidate* slots \t6 chosen through the helper functions we will meet next \t6 and returns the pair.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 261,
+          "end": 269
+        }
+      ],
+      "title": "",
+      "id": "37499"
+    },
+    {
+      "type": "highlight",
+      "description": "`getActiveDigest` and `getCandidateDigest` are just thin wrappers that pick one of the two slots.\nThey exist so off-chain agents do not have to remember bit-wise tricks and can ask the contract directly for one digest.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 271,
+          "end": 281
+        }
+      ],
+      "title": "",
+      "id": "37500"
+    },
+    {
+      "type": "highlight",
+      "description": "Both getters rely on these private helpers.\n`_getActiveIndex` returns the stored index; `_getCandidateIndex` flips the least-significant bit (`^ 1`) to give you the other position in the two-slot ring-buffer.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 447,
+          "end": 453
+        }
+      ],
+      "title": "",
+      "id": "37501"
+    },
+    {
+      "type": "highlight",
+      "description": "`getConfig` walks over the entire ring-buffer (at most two iterations) and returns the complete `VersionedConfig` matching a digest.\nNotice the guard against `ZERO_DIGEST` so deleted entries are never surfaced.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 289,
+          "end": 303
+        }
+      ],
+      "title": "",
+      "id": "37502"
+    },
+    {
+      "type": "highlight",
+      "description": "`MAX_CONCURRENT_CONFIGS` is hard-coded to 2, confirming that the **ring-buffer** only ever holds **active** and **candidate**.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 151,
+          "end": 153
+        }
+      ],
+      "title": "",
+      "id": "37503"
+    },
+    {
+      "type": "highlight",
+      "description": "`getAllConfigs` fetches both slots like `getConfigDigests`, but returns the full `VersionedConfig` structs.\nIt silently ignores any slot whose digest is zero – making the return value concise when one of the positions is unused.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 309,
+          "end": 324
+        }
+      ],
+      "title": "",
+      "id": "37504"
+    },
+    {
+      "type": "textOnly",
+      "description": "With these helpers in mind you can recognise most read-only call-sites:\n1. Use `getConfigDigests` to cheaply poll for changes (single `SLOAD`).\n2. If a digest changes, call `getConfig` or `getAllConfigs` to pull the full structure.\n3. Ignore any slot whose digest is `bytes32(0)` – the contract already treats it as non-existent.",
+      "title": "",
+      "id": "37505"
+    }
+  ]
+}

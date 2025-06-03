@@ -1,0 +1,130 @@
+{
+  "title": "5.2: TokenAdminRegistry.sol – Core Storage & Read Paths",
+  "id": "DM/vB6+EKm54DrcO5NHozMOOXHX8gDsTe+eaN/pZSyQ=",
+  "originalId": 3107,
+  "position": 27,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Every **CCIP-enabled token** gets a small on-chain profile inside `TokenAdminRegistry`.  We will examine what is stored for each token and how **read-only callers** retrieve it – ignoring any mutating code for now.",
+      "title": "",
+      "id": "37161"
+    },
+    {
+      "type": "highlight",
+      "description": "OpenZeppelin’s `EnumerableSet` is imported (lines 10-12) and activated for `AddressSet` (line 18).  This single statement injects `length()`, `at()`, `add()`, `remove()` and `contains()` helpers that we will shortly see in use.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 8,
+          "end": 18
+        }
+      ],
+      "title": "",
+      "id": "37162"
+    },
+    {
+      "type": "highlight",
+      "description": "Definition of the TokenConfig struct (packed admin and pool addresses)",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 33,
+          "end": 39
+        }
+      ],
+      "title": "",
+      "id": "37163"
+    },
+    {
+      "type": "highlight",
+      "description": "Storage variables:\n- **s_tokenConfig**: a mapping from each token address to its `TokenConfig` struct, capturing admin configurations and other token-specific settings.\n- **s_tokens**: an `EnumerableSet` that tracks all token addresses that have been configured, ensuring easy enumeration and existence checks.\n- **s_registryModules**: an `EnumerableSet` of helper contract addresses authorized to register and manage administrators for tokens.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 43,
+          "end": 51
+        }
+      ],
+      "title": "",
+      "id": "37164"
+    },
+    {
+      "type": "textOnly",
+      "description": "With the storage layout clear, let’s walk through the **read-only helpers** that expose this information.",
+      "title": "",
+      "id": "37165"
+    },
+    {
+      "type": "highlight",
+      "description": "`getPools(tokens[])` performs a single mapping read per input address (line 59) and returns the pool list in the original order – ideal for batched RPC calls.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 52,
+          "end": 61
+        }
+      ],
+      "title": "",
+      "id": "37166"
+    },
+    {
+      "type": "highlight",
+      "description": "`getPool(token)` is the single-token variant: one lookup, one return.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 64,
+          "end": 69
+        }
+      ],
+      "title": "",
+      "id": "37167"
+    },
+    {
+      "type": "highlight",
+      "description": "`getTokenConfig(token)` exposes the whole **three-field struct** so callers can inspect both `administrator` fields as well as the `tokenPool` address.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 71,
+          "end": 78
+        }
+      ],
+      "title": "",
+      "id": "37168"
+    },
+    {
+      "type": "highlight",
+      "description": "`getAllConfiguredTokens(startIndex, maxCount)` paginates over `s_tokens`:\n- line 90 fetches `s_tokens.length()` – an O(1) call provided by `EnumerableSet`.\n- lines 94–97 cap the requested page so callers never read past the end.\n- line 100 retrieves each entry with `s_tokens.at(i)`, another O(1) helper that gives predictable pagination even for large sets.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 80,
+          "end": 104
+        }
+      ],
+      "title": "",
+      "id": "37169"
+    },
+    {
+      "type": "highlight",
+      "description": "`isRegistryModule(addr)` checks membership using `s_registryModules.contains(addr)` – the same `EnumerableSet` pattern applied to authorised helper contracts.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 196,
+          "end": 203
+        }
+      ],
+      "title": "",
+      "id": "37170"
+    },
+    {
+      "type": "textOnly",
+      "description": "Recap\n\n- Each token’s `TokenConfig`—with fields `administrator`, `pendingAdministrator`, and `tokenPool`—is stored in the `s_tokenConfig` mapping.\n- Two `EnumerableSet` instances track:\n  - `s_tokens`: all tokens that have been configured\n  - `s_registryModules`: addresses permitted to act as registry modules\n- View-only functions read from these structures and use `EnumerableSet`’s O(1) methods (`length()`, `at()`, `contains()`):\n  - `getTokenConfig(token)`: returns the `TokenConfig` for `token`\n  - `isRegistryModule(module)`: returns whether `module` is in `s_registryModules`\n  - `getPool(token)`: returns the `tokenPool` field from that token’s `TokenConfig`\n  - `getPools(tokens[])`: for each token in `tokens`, returns its `tokenPool`\n  - `getAllConfiguredTokens(cursor, size)`: returns a slice of `s_tokens` starting at `cursor`, plus the next cursor value for pagination",
+      "title": "",
+      "id": "37171"
+    }
+  ]
+}

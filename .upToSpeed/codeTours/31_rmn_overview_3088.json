@@ -1,0 +1,137 @@
+{
+  "title": "3.1: RMN: Overview",
+  "id": "KZvgueUzHUgi4z5eV29qDgqn2qK+QgptQikII2WbxCM=",
+  "originalId": 3088,
+  "position": 12,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "The **Risk Management Network (RMN)** comprises three contracts that ensure `CCIP` flows are protected by a configurable set of off-chain signers and a **kill-switch**:\n\n- `RMNHome` – lives on the source chain, owns the configuration/state machine that `CCIP` oracles & `RMN` nodes read.\n- `RMNRemote` – deployed on each destination chain, verifies `RMN` node signatures, implements the curse **kill-switch**, and proxies the legacy `isBlessed()`.\n- `RMNProxy` – a gas-saving indirection; `OffRamp`/`Router` call this fixed address, which forwards calls to the current `ARM` implementation.",
+      "title": "",
+      "id": "36883"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "chains/evm/contracts/rmn/RMNHome.sol"
+      ],
+      "description": "`RMNHome` sets up and transitions through a **minimal state machine** for configuration. `CCIP` oracles, the off-chain `RMN` nodes, and `RMNRemote` on other chains all read its active config digest.",
+      "title": "",
+      "id": "36884"
+    },
+    {
+      "type": "highlight",
+      "description": "Lines 8–18 describe the four states (`Init`, `Candidate`, `Active`, `ActiveAndCandidate`) and allowed transitions, driven by owner-only calls.",
+      "file": "chains/evm/contracts/rmn/RMNHome.sol",
+      "highlight": [
+        {
+          "start": 8,
+          "end": 18
+        }
+      ],
+      "title": "",
+      "id": "36885"
+    },
+    {
+      "type": "textOnly",
+      "description": "Key public functions in `RMNHome` for managing the state machine:\n\n- `setCandidate(StaticConfig, DynamicConfig, bytes32)` → post a new candidate config\n- `revokeCandidate(bytes32)` → drop the candidate\n- `promoteCandidateAndRevokeActive(bytes32, bytes32)` → flip candidate to active and revoke the old one\n- `setDynamicConfig(DynamicConfig, bytes32)` → tweak only the dynamic part\n\nPlus getters like `getConfigDigests()`, `getActiveDigest()`, `getConfig(...)`.",
+      "title": "",
+      "id": "36886"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "chains/evm/contracts/rmn/RMNRemote.sol"
+      ],
+      "description": "`RMNRemote` lives on each destination chain.  It enforces `f+1` signatures from `RMN` nodes, exposes a subject-based curse kill-switch, and still answers `isBlessed()` for legacy **CCIP** lanes.",
+      "title": "",
+      "id": "36887"
+    },
+    {
+      "type": "highlight",
+      "description": "`verify`(`address` `offRamp`, `Internal.MerkleRoot[]` `merkleRoots`, `Signature[]` `signatures`) rebuilds the report digest, checks `≥f+1` ECDSA sigs from configured signers, and reverts if any check fails.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 95,
+          "end": 129
+        }
+      ],
+      "title": "",
+      "id": "36888"
+    },
+    {
+      "type": "highlight",
+      "description": "`curse(bytes16[] subjects)` / `uncurse(bytes16[] subjects)` let the owner block or unblock one or more 16-byte subjects. `getCursedSubjects()` and `isCursed(...)` expose the current curse state.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 198,
+          "end": 221
+        }
+      ],
+      "title": "",
+      "id": "36889"
+    },
+    {
+      "type": "highlight",
+      "description": "`isBlessed(TaggedRoot)` (for legacy CCIP <1.6) simply relays to the old `RMN` contract if configured, preserving backward compatibility.",
+      "file": "chains/evm/contracts/rmn/RMNRemote.sol",
+      "highlight": [
+        {
+          "start": 277,
+          "end": 287
+        }
+      ],
+      "title": "",
+      "id": "36890"
+    },
+    {
+      "type": "textOnly",
+      "description": "Key public functions in `RMNRemote`:\n\n- `verify`\n- `setConfig`(`Config`)\n- `curse` / `uncurse`\n- `getCursedSubjects` / `isCursed`\n- `isBlessed` (legacy pass-through)",
+      "title": "",
+      "id": "36891"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "chains/evm/contracts/rmn/RMNProxy.sol"
+      ],
+      "description": "`RMNProxy` is the lightweight on-chain indirection.  `OffRamp` and `Router` contracts point to this one address; it forwards calls to whichever `ARM` (active `RMNRemote`) implementation the owner has set.",
+      "title": "",
+      "id": "36892"
+    },
+    {
+      "type": "highlight",
+      "description": "`setARM(address arm)` – **owner-only**.  Retargets the proxy to a new `ARM` implementation contract address, saving gas by avoiding per-contract storage.",
+      "file": "chains/evm/contracts/rmn/RMNProxy.sol",
+      "highlight": [
+        {
+          "start": 30,
+          "end": 38
+        }
+      ],
+      "title": "",
+      "id": "36893"
+    },
+    {
+      "type": "highlight",
+      "description": "`fallback()` uses inline assembly to copy calldata, call `s_arm` with all available gas, then passthrough return or revert data—transparent to callers.",
+      "file": "chains/evm/contracts/rmn/RMNProxy.sol",
+      "highlight": [
+        {
+          "start": 52,
+          "end": 76
+        }
+      ],
+      "title": "",
+      "id": "36894"
+    },
+    {
+      "type": "textOnly",
+      "description": "In production an OffRamp does:\n\n1️⃣ Call `RMNProxy.verify(...)` (fixed address)  \n2️⃣ Fallback in `RMNProxy` forwards to `s_arm` (the `RMNRemote`)  \n3️⃣ `RMNRemote.verify` validates ≤f faulty signatures and checks no active curse  \n\nWith this map you can now dive into `RMNHome` for config details, `RMNRemote` for verification/kill-switch, or `RMNProxy` for proxy plumbing.",
+      "title": "",
+      "id": "36895"
+    }
+  ]
+}

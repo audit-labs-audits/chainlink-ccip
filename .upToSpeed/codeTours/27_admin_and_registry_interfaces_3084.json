@@ -1,0 +1,124 @@
+{
+  "title": "2.7: Admin & Registry Interfaces",
+  "id": "I2n7jv52jye8qw1R+6i63vMimDbH1XZ9pb+lxmb9a0w=",
+  "originalId": 3084,
+  "position": 8,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This tour examines the mechanisms governing CCIP-enabled tokens, outlines the two-step administrator transfer process at the token level, and contrasts it with the contract-wide owner upgrade pathway.",
+      "title": "",
+      "id": "36904"
+    },
+    {
+      "type": "highlight",
+      "description": "The public interface groups all governance hooks that a token can call. Lines 6–8 read the token’s pool, while 13–20, 18–21, 26–33 outline a **three-stage life-cycle**:  \n- **propose an administrator**  \n- **accept the role**  \n- **transfer it in future**  \n`setPool` (26–27) is the day-to-day power the administrator gains.",
+      "file": "chains/evm/contracts/interfaces/ITokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 34
+        }
+      ],
+      "title": "",
+      "id": "36905"
+    },
+    {
+      "type": "highlight",
+      "description": "Internally every token gets its own `TokenConfig`. Two dedicated slots — `administrator` and `pendingAdministrator` — are the data backbone of the two-step pattern.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 35,
+          "end": 39
+        }
+      ],
+      "title": "",
+      "id": "36906"
+    },
+    {
+      "type": "highlight",
+      "description": "Lines 136-140 are step 1: the current admin calls `transferAdminRole`, which merely records a `pendingAdministrator` and emits an event. Lines 146-158 are step 2: only that pending address can call `acceptAdminRole`, finalising the swap and clearing the pending slot. This **opt-in handshake** prevents accidental or malicious transfers.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 131,
+          "end": 158
+        }
+      ],
+      "title": "",
+      "id": "36907"
+    },
+    {
+      "type": "highlight",
+      "description": "`proposeAdministrator` is the bootstrap path.  A registry module or the registry owner nominates the very first admin; from then on, the token’s own administrator controls further changes.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 171,
+          "end": 184
+        }
+      ],
+      "title": "",
+      "id": "36908"
+    },
+    {
+      "type": "highlight",
+      "description": "`setPool` is the practical reward for being an admin: it lets that address enable, update, or disable the token’s CCIP pool. Because checks are guarded by `onlyTokenAdmin`, this authority is strictly per-token.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 110,
+          "end": 128
+        }
+      ],
+      "title": "",
+      "id": "36909"
+    },
+    {
+      "type": "highlight",
+      "description": "By contrast, `owner()` is a single address that governs the *registry contract itself* — upgrades, new modules, emergency switches.  It is totally separate from any per-token administrator.",
+      "file": "chains/evm/contracts/interfaces/IOwner.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 8
+        }
+      ],
+      "title": "",
+      "id": "36910"
+    },
+    {
+      "type": "highlight",
+      "description": "Some tokens publish their own admin via `getCCIPAdmin()`. The registry can read this value to self-serve onboarding.",
+      "file": "chains/evm/contracts/interfaces/IGetCCIPAdmin.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 8
+        }
+      ],
+      "title": "",
+      "id": "36911"
+    },
+    {
+      "type": "highlight",
+      "description": "Lines 37-40 show a helper module that does exactly that: it queries `getCCIPAdmin`, then calls `proposeAdministrator`. This keeps discovery decentralised while the `owner()` address stays untouched.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/RegistryModuleOwnerCustom.sol",
+      "highlight": [
+        {
+          "start": 33,
+          "end": 41
+        }
+      ],
+      "title": "",
+      "id": "36912"
+    },
+    {
+      "type": "textOnly",
+      "description": "Putting it together:\n\n- A token’s administrator changes hands through a deliberate two-step (transfer → accept) handshake.\n- Each token therefore has its own local governor who can tweak that token’s CCIP settings.\n- The registry contract itself remains protected by a classic single `owner()` role.\n\nTwo concentric layers of governance serve two distinct scopes.",
+      "title": "",
+      "id": "36913"
+    }
+  ]
+}

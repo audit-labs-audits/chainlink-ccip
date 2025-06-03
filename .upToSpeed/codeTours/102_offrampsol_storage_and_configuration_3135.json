@@ -1,0 +1,163 @@
+{
+  "title": "10.2: OffRamp.sol: Storage & Configuration",
+  "id": "v6INUqfEsfCpHSeshQFSX1Upt+uJpHs4ogToVOQFcsk=",
+  "originalId": 3135,
+  "position": 54,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This tour focuses on one question \t6where does an `OffRamp` instance hold its data and how that data is seeded at deployment.",
+      "title": "",
+      "id": "37348"
+    },
+    {
+      "type": "highlight",
+      "description": "Three structs describe the Off-Ramp’s configuration surface.\n• StaticConfig – immutable parameters (lines 99-104).\n• SourceChainConfig – per-lane settings that may evolve (lines 107-113).\n• SourceChainConfigArgs – same fields plus selector, used when passing arrays (lines 118-123).",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 96,
+          "end": 117
+        }
+      ],
+      "title": "",
+      "id": "37349"
+    },
+    {
+      "type": "highlight",
+      "description": "DynamicConfig (lines 128-131) groups mutable, instance-wide knobs: feeQuoter, permissionLessExecutionThresholdSeconds and an optional messageInterceptor.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 125,
+          "end": 131
+        }
+      ],
+      "title": "",
+      "id": "37350"
+    },
+    {
+      "type": "highlight",
+      "description": "Storage is split between immutables and ordinary variables.\n• The five `i_*` immutables (153-163) are the on-chain representation of StaticConfig.\n• `s_dynamicConfig` (165) caches DynamicConfig.\n• `s_sourceChainSelectors` (168) is an EnumerableSet keeping the list of enabled source chains.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 149,
+          "end": 170
+        }
+      ],
+      "title": "",
+      "id": "37351"
+    },
+    {
+      "type": "highlight",
+      "description": "State that grows over time.\n• `s_sourceChainConfigs` – mapping selector → SourceChainConfig (172).\n• `s_executionStates` – packed bitmaps for each (chain, seqNr) pair (177-179).\n• `s_roots` – commit timestamp per (chain, merkleRoot) (181-183).\n• `s_latestPriceSequenceNumber` – last accepted OCR seqNr (184).",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 171,
+          "end": 185
+        }
+      ],
+      "title": "",
+      "id": "37352"
+    },
+    {
+      "type": "highlight",
+      "description": "Construction wires the immutable copies – after basic validation every field from StaticConfig is assigned to its dedicated `i_*` slot and the StaticConfigSet event fires (line 207).",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 186,
+          "end": 207
+        }
+      ],
+      "title": "",
+      "id": "37353"
+    },
+    {
+      "type": "highlight",
+      "description": "Still inside the constructor OffRamp seeds the mutable structures:\n1. `_setDynamicConfig(dynamicConfig)` (line 209)\n2. `_applySourceChainConfigUpdates(sourceChainConfigs)` (line 210)",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 208,
+          "end": 211
+        }
+      ],
+      "title": "",
+      "id": "37354"
+    },
+    {
+      "type": "highlight",
+      "description": "`_setDynamicConfig` validates the supplied addresses, writes them into `s_dynamicConfig`, then emits DynamicConfigSet (1072-1073).",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 1062,
+          "end": 1073
+        }
+      ],
+      "title": "",
+      "id": "37355"
+    },
+    {
+      "type": "highlight",
+      "description": "`_applySourceChainConfigUpdates` iterates over every SourceChainConfigArgs provided at deployment or later.\n• 1021-1044 – new or updated mapping entry in `s_sourceChainConfigs`.\n• 1046-1048 – selector inserted into `s_sourceChainSelectors` set.\n• 1049 – SourceChainConfigSet event records the change.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 1006,
+          "end": 1050
+        }
+      ],
+      "title": "",
+      "id": "37356"
+    },
+    {
+      "type": "highlight",
+      "description": "`getStaticConfig` reconstructs the struct on-the-fly from the immutables.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 956,
+          "end": 966
+        }
+      ],
+      "title": "",
+      "id": "37357"
+    },
+    {
+      "type": "highlight",
+      "description": "`getDynamicConfig` returns the `s_dynamicConfig` struct verbatim.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 969,
+          "end": 973
+        }
+      ],
+      "title": "",
+      "id": "37358"
+    },
+    {
+      "type": "highlight",
+      "description": "`getAllSourceChainConfigs` iterates over the EnumerableSet to build an array of selectors plus their mapping entries, exposing the whole lane table.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 984,
+          "end": 993
+        }
+      ],
+      "title": "",
+      "id": "37359"
+    },
+    {
+      "type": "textOnly",
+      "description": "**Key take-aways**\n• **StaticConfig** lives only in the five `i_*` immutables.\n• **DynamicConfig**, per-lane configs and the execution bookkeeping all sit in private/internal storage mappings declared at the top of the file.\n• The constructor writes once to each of these stores and emits events so observers can mirror the `OffRamp`’s initial state.\n• Later updates are gated by owner-only setters that reuse the same helper routines shown above.\nYou now know exactly where each `OffRamp` datum is stored and how to read it back via the provided view helpers.",
+      "title": "",
+      "id": "37360"
+    }
+  ]
+}

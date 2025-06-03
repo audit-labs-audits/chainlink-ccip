@@ -1,0 +1,137 @@
+{
+  "title": "10.3: OffRamp.sol: Execution State Bitmap",
+  "id": "rkE9cwI22o8vokU17K22m4elGYD8DKh8BcoK4Jsli1U=",
+  "originalId": 3136,
+  "position": 55,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "`OffRamp` compresses each message’s lifecycle into just two bits and packs 128 of those tiny state machines into a single storage slot.  The next slides walk through the constants, the bit-manipulation helpers, and the transition checks that protect every execution.",
+      "title": "",
+      "id": "37416"
+    },
+    {
+      "type": "highlight",
+      "description": "Two compile-time constants drive the packing math.\n\n- Line 218 sets the width to 2 bits per message.\n- Line 220 builds the `0b11` mask that isolates a single field.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 217,
+          "end": 221
+        }
+      ],
+      "title": "",
+      "id": "37417"
+    },
+    {
+      "type": "highlight",
+      "description": "Why exactly two bits?  `Internal.MessageExecutionState` has four possible values, which fit perfectly in the `00-11` encoding.",
+      "file": "chains/evm/contracts/libraries/Internal.sol",
+      "highlight": [
+        {
+          "start": 195,
+          "end": 206
+        }
+      ],
+      "title": "",
+      "id": "37418"
+    },
+    {
+      "type": "highlight",
+      "description": "State is stored in `s_executionStates`. The first map key is the source chain; the second is `sequenceNumber / 128`, so each `uint256` slot holds 128 consecutive messages.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 174,
+          "end": 179
+        }
+      ],
+      "title": "",
+      "id": "37419"
+    },
+    {
+      "type": "highlight",
+      "description": "`getExecutionState()` reads the slot, right-shifts by `(sequenceNumber % 128) × 2`, masks with `0b11`, and casts the result back to the **enum**.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 222,
+          "end": 236
+        }
+      ],
+      "title": "",
+      "id": "37420"
+    },
+    {
+      "type": "highlight",
+      "description": "`_getSequenceNumberBitmap()` makes the slot math explicit: `sequenceNumber / 128` picks the bitmap to read or update.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 264,
+          "end": 269
+        }
+      ],
+      "title": "",
+      "id": "37421"
+    },
+    {
+      "type": "highlight",
+      "description": "`_setExecutionState()` mirrors the read logic.  It clears the two-bit field with `bitmap &= ~(MASK << offset)` and then ORs in the new value before writing the slot back.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 244,
+          "end": 258
+        }
+      ],
+      "title": "",
+      "id": "37422"
+    },
+    {
+      "type": "highlight",
+      "description": "Before any execution attempt, the function demands that the current state is `UNTOUCHED` or `FAILURE`.  `IN_PROGRESS` and `SUCCESS` are blocked, preventing re-entrancy and duplicate execution.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 438,
+          "end": 447
+        }
+      ],
+      "title": "",
+      "id": "37423"
+    },
+    {
+      "type": "highlight",
+      "description": "Comments and checks inside the `manual-execution` branch list the only acceptable transitions: `UNTOUCHED`→`SUCCESS`, `UNTOUCHED`→`FAILURE`, and `FAILURE`→`SUCCESS`.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 460,
+          "end": 474
+        }
+      ],
+      "title": "",
+      "id": "37424"
+    },
+    {
+      "type": "highlight",
+      "description": "A final guard ensures the new state is either **SUCCESS** or **FAILURE**; anything else reverts.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 519,
+          "end": 524
+        }
+      ],
+      "title": "",
+      "id": "37425"
+    },
+    {
+      "type": "textOnly",
+      "description": "Putting it all together: for a given (`source`, `sequenceNumber`) `OffRamp` pinpoints the 2-bit slice, atomically updates it, and the surrounding checks enforce the restricted state graph.  This compact design minimises gas while securely gating every message.",
+      "title": "",
+      "id": "37426"
+    }
+  ]
+}

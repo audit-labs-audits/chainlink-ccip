@@ -1,0 +1,98 @@
+{
+  "title": "9.4: Admin & Security Controls",
+  "id": "ixrWWrGSUt8d12TUA5IBMRODX4mQdyleOeMcndetxJM=",
+  "originalId": 3133,
+  "position": 52,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "The `Router` exposes just a handful of owner-gated knobs. They let governance tweak day-to-day parameters while a separate `RMN switch` can freeze everything instantly.",
+      "title": "",
+      "id": "37340"
+    },
+    {
+      "type": "highlight",
+      "description": "The wrapped-native address lives in storage so it can be updated if the chain’s canonical `WETH`-style contract ever changes.  `getWrappedNative()` is a view helper; only `setWrappedNative()` mutates state and it is protected by `onlyOwner`.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 194,
+          "end": 206
+        }
+      ],
+      "title": "",
+      "id": "37341"
+    },
+    {
+      "type": "highlight",
+      "description": "Three read-only helpers power dashboards and off-chain tooling:\n- `getOnRamp` exposes the single on-ramp for a destination selector.\n- `getOffRamps` unpacks the internal set into a user-friendly array.\n- `isOffRamp` does the same membership test on-chain.\n\nBecause none of them change storage, they are callable by anyone.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 214,
+          "end": 236
+        }
+      ],
+      "title": "",
+      "id": "37342"
+    },
+    {
+      "type": "highlight",
+      "description": "`applyRampUpdates` is the sole upgrade endpoint:\n1. Overwrite or disable on-ramps (zero address disables).\n2. Remove stale off-ramps, reverting if the pair never existed.\n3. Add new off-ramps.\nEvery change emits an event (`OnRampSet`, `OffRampRemoved`, `OffRampAdded`) so indexers and monitoring systems stay in sync.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 238,
+          "end": 274
+        }
+      ],
+      "title": "",
+      "id": "37343"
+    },
+    {
+      "type": "highlight",
+      "description": "`recoverTokens` exists for the just-in-case scenario where users accidentally transfer assets directly to the `Router`. Governance can sweep `ERC-20`s or native coins back out, with safeguards against zero-address recipients and failed native sends.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 276,
+          "end": 290
+        }
+      ],
+      "title": "",
+      "id": "37344"
+    },
+    {
+      "type": "highlight",
+      "description": "Every user-facing entry point (`ccipSend`, `routeMessage`, …) is wrapped in `whenNotCursed`.  If the **RMN** signals a curse, calls revert with `BadARMSignal` and the `Router` hard-pauses regardless of the owner.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 296,
+          "end": 300
+        }
+      ],
+      "title": "",
+      "id": "37345"
+    },
+    {
+      "type": "highlight",
+      "description": "The modifier simply delegates to `IRMN.isCursed()`.  One bit flipped inside the `RMN` implementation propagates to every contract that respects the curse, giving the network a single global kill switch.",
+      "file": "chains/evm/contracts/interfaces/IRMN.sol",
+      "highlight": [
+        {
+          "start": 12,
+          "end": 18
+        }
+      ],
+      "title": "",
+      "id": "37346"
+    },
+    {
+      "type": "textOnly",
+      "description": "In practice:\n\n- Routine configuration changes (wrapped native, ramp lists, asset recovery) are restricted to the owner via `onlyOwner` and emit events for transparency.\n- Emergency shutdown can be triggered by any holder of the RMN role and takes effect immediately.\n\nThis two-layer structure separates owner-controlled updates from the global emergency shutdown mechanism.",
+      "title": "",
+      "id": "37347"
+    }
+  ]
+}

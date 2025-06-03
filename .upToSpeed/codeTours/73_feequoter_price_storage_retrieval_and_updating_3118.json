@@ -1,0 +1,137 @@
+{
+  "title": "7.3: FeeQuoter: Price Storage, Retrieval & Updating",
+  "id": "rnTcQ6ed+DT/XfCQc3Da6gOxmoH1iYH5rRVQc6hR1tg=",
+  "originalId": 3118,
+  "position": 37,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "A fresh USD price takes two possible routes into `FeeQuoter` — a pull-based update from a privileged external caller or a push-based `Keystone` report. Once stored, several `read helpers` combine it with gas prices and convert between tokens. Follow the flow across the next steps.",
+      "title": "",
+      "id": "37202"
+    },
+    {
+      "type": "highlight",
+      "description": "Reading a token price starts here. Lines 257-259 throw away a price that is older than the **immutable staleness threshold**. If it is too old and an **on-chain data-feed** is configured (262-268) the **function** retrieves the fresh value, then returns whichever of the two timestamps is newer (270-271).",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 250,
+          "end": 272
+        }
+      ],
+      "title": "",
+      "id": "37203"
+    },
+    {
+      "type": "highlight",
+      "description": "Data-feed lookup unwraps `latestRoundData()`, reverts on negative answers (**387-389**), rebases decimals via the helper on the next slide, and packs the rebased value together with the feed’s updatedAt timestamp into the same struct used for in-contract storage.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 371,
+          "end": 395
+        }
+      ],
+      "title": "",
+      "id": "37204"
+    },
+    {
+      "type": "highlight",
+      "description": "The rebase helper turns any feed answer into the `36-decimals “USD per 1e18 token units”` format. It multiplies or divides depending on whether the combined decimals exceed 36 (775-779) and finally guards the result against **uint224** overflow (781-783).",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 760,
+          "end": 785
+        }
+      ],
+      "title": "",
+      "id": "37205"
+    },
+    {
+      "type": "highlight",
+      "description": "Gas prices are stored in an identical `timestamped struct`. The `getter` is intentionally minimal — it returns the raw `mapping` entry and lets callers enforce freshness.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 306,
+          "end": 318
+        }
+      ],
+      "title": "",
+      "id": "37206"
+    },
+    {
+      "type": "highlight",
+      "description": "`getTokenAndGasPrices()` is a convenience wrapper that first ensures the destination chain is enabled (330-331) and then retrieves validated token and gas prices in one call.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 321,
+          "end": 335
+        }
+      ],
+      "title": "",
+      "id": "37207"
+    },
+    {
+      "type": "highlight",
+      "description": "`convertTokenAmount()` shows one way the stored prices are consumed: multiply the source amount by its USD price and divide by the target token’s USD price to obtain an equivalent amount.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 345,
+          "end": 356
+        }
+      ],
+      "title": "",
+      "id": "37208"
+    },
+    {
+      "type": "highlight",
+      "description": "`updatePrices()` is the pull-based write path.  After an authorised-caller check (463-465) two tight loops write token prices (468-473) and gas prices (477-481), each emitting an event for off-chain watchers.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 460,
+          "end": 483
+        }
+      ],
+      "title": "",
+      "id": "37209"
+    },
+    {
+      "type": "highlight",
+      "description": "Owners manage the fallback feed configuration here. Each update records the feed address, the token’s own decimals and an enable flag — the exact information `getTokenPrice` relies on when it falls back.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 495,
+          "end": 506
+        }
+      ],
+      "title": "",
+      "id": "37210"
+    },
+    {
+      "type": "highlight",
+      "description": "`onReport()` is the Keystone push path. Permission checks guard the entry (522-525); every `ReceivedCCIPFeedReport` is re-based (535-538), compared with the currently stored timestamp (539-542) and written if it is newer (545-548).",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 521,
+          "end": 549
+        }
+      ],
+      "title": "",
+      "id": "37211"
+    },
+    {
+      "type": "textOnly",
+      "description": "Whether a price arrives via `updatePrices` or `onReport`, it is stored in the same packed mapping.  Subsequent reads through `getTokenPrice`, `getDestinationChainGasPrice` and helpers like `convertTokenAmount` use identical staleness rules and decimal conventions, ensuring every fee calculation rests on consistent, fresh USD data.",
+      "title": "",
+      "id": "37212"
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+{
+  "title": "10.6: OffRamp.sol: Token Release & Mint Mechanics",
+  "id": "5QrK94xldR2DtbcskfLGCIXAH6omQeeL/sc4YJaEMgU=",
+  "originalId": 3139,
+  "position": 58,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Execution already brought us to `OffRamp.executeSingleMessage`; from here the logic branches into token handling. This tour follows that branch and shows how the `contract` proves that a delivered amount really lands in the receiver’s wallet.",
+      "title": "",
+      "id": "37440"
+    },
+    {
+      "type": "highlight",
+      "description": "The journey starts in _releaseOrMintTokens: each source-side token amount is optionally given a custom gas budget (lines 779-784) and then forwarded to the single-token helper on line 785.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 768,
+          "end": 788
+        }
+      ],
+      "title": "",
+      "id": "37441"
+    },
+    {
+      "type": "highlight",
+      "description": "Inside _releaseOrMintSingleToken, the first task is to discover a **trusted pool** for the local token.\n• Line 673 asks TokenAdminRegistry for the pool address.\n• Line 678 uses ERC-165 to verify that the address really claims CCIP_POOL_V1 support.\nEither test failing aborts the whole message before any external call is attempted.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 663,
+          "end": 681
+        }
+      ],
+      "title": "",
+      "id": "37442"
+    },
+    {
+      "type": "highlight",
+      "description": "TokenAdminRegistry keeps a simple mapping from token → pool; getPool is an O(1) lookup that OffRamp fully trusts.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 64,
+          "end": 69
+        }
+      ],
+      "title": "",
+      "id": "37443"
+    },
+    {
+      "type": "highlight",
+      "description": "ERC165CheckerReverting performs the compatibility probe using at most 30 000 gas and even reverts up-front if that much gas is not available.  This prevents Out-Of-Gas traps when verifying third-party contracts.",
+      "file": "chains/evm/contracts/libraries/ERC165CheckerReverting.sol",
+      "highlight": [
+        {
+          "start": 21,
+          "end": 33
+        }
+      ],
+      "title": "",
+      "id": "37444"
+    },
+    {
+      "type": "highlight",
+      "description": "The actual release/mint is carried out via CallWithExactGas (lines 689-708):\n• The payload encodes IPoolV1.releaseOrMint (691-702).\n• OffRamp forwards only the gas that remains after the pre-balance snapshot (705).\n• Return-data is capped, and any failure is re-thrown as TokenHandlingError (711, just below).",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 685,
+          "end": 708
+        }
+      ],
+      "title": "",
+      "id": "37445"
+    },
+    {
+      "type": "highlight",
+      "description": "IPoolV1’s releaseOrMint signature is the contract that every pool must implement; OffRamp encodes exactly this interface when making the external call.",
+      "file": "chains/evm/contracts/interfaces/IPool.sol",
+      "highlight": [
+        {
+          "start": 19,
+          "end": 27
+        }
+      ],
+      "title": "",
+      "id": "37446"
+    },
+    {
+      "type": "highlight",
+      "description": "_getBalanceOfReceiver is called before **and** after the pool interaction.  It uses the same exact-gas pattern to read IERC20.balanceOf and returns both the balance and the gas it consumed.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 740,
+          "end": 757
+        }
+      ],
+      "title": "",
+      "id": "37447"
+    },
+    {
+      "type": "highlight",
+      "description": "If the observed delta does not equal the amount claimed by the pool, the transaction reverts with ReleaseOrMintBalanceMismatch, surfacing the three numbers involved.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 52,
+          "end": 55
+        }
+      ],
+      "title": "",
+      "id": "37448"
+    },
+    {
+      "type": "highlight",
+      "description": "The balance check is skipped only when `receiver == localPoolAddress` (721-723).  This is necessary for lock-release pools whose own balance goes down as they hand tokens out.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 720,
+          "end": 728
+        }
+      ],
+      "title": "",
+      "id": "37449"
+    },
+    {
+      "type": "textOnly",
+      "description": "Putting it all together: `_releaseOrMintTokens` → `_releaseOrMintSingleToken` forms a layered defence—registry lookup, **ERC-165** compatibility, exact-gas external call, and strict post-balance verification—guaranteeing that tokens are released or minted exactly as advertised.",
+      "title": "",
+      "id": "37450"
+    }
+  ]
+}

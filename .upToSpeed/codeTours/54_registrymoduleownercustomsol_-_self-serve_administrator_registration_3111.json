@@ -1,0 +1,98 @@
+{
+  "title": "5.4: RegistryModuleOwnerCustom.sol – Self-Serve Administrator Registration",
+  "id": "2/+bmXrXClyLYWvTHc51xW/TEWAKFwVw6gsjdfwWF10=",
+  "originalId": 3111,
+  "position": 29,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Tokens that follow very different admin patterns can all onboard themselves to the `TokenAdminRegistry` through this small helper contract. The walkthrough starts with its `constructor` and then looks at the three **public helpers** and the shared **internal routine**.",
+      "title": "",
+      "id": "37125"
+    },
+    {
+      "type": "highlight",
+      "description": "The constructor stores an immutable pointer to the central `TokenAdminRegistry`. A zero-address is rejected immediately with the `AddressZero()` custom revert, guaranteeing every instance is wired to a valid registry.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/RegistryModuleOwnerCustom.sol",
+      "highlight": [
+        {
+          "start": 21,
+          "end": 31
+        }
+      ],
+      "title": "",
+      "id": "37126"
+    },
+    {
+      "type": "highlight",
+      "description": "Three concise custom reverts make failures explicit, and the `AdministratorRegistered` event gives observers a single place to listen for successful proposals.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/RegistryModuleOwnerCustom.sol",
+      "highlight": [
+        {
+          "start": 12,
+          "end": 17
+        }
+      ],
+      "title": "",
+      "id": "37127"
+    },
+    {
+      "type": "highlight",
+      "description": "getCCIPAdmin pattern – a token that exposes `getCCIPAdmin()` calls this helper. The module reads the admin directly from the token contract and funnels everything through `_registerAdmin`.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/RegistryModuleOwnerCustom.sol",
+      "highlight": [
+        {
+          "start": 33,
+          "end": 40
+        }
+      ],
+      "title": "",
+      "id": "37128"
+    },
+    {
+      "type": "highlight",
+      "description": "`owner()` pattern – classic `Ownable`-style tokens use their `owner()` view to supply the same information, riding the exact same internal path.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/RegistryModuleOwnerCustom.sol",
+      "highlight": [
+        {
+          "start": 42,
+          "end": 49
+        }
+      ],
+      "title": "",
+      "id": "37129"
+    },
+    {
+      "type": "highlight",
+      "description": "**AccessControl pattern** – tokens that rely on `OpenZeppelin` roles must demonstrate they hold `DEFAULT_ADMIN_ROLE` themselves. If not, `RequiredRoleNotFound` is thrown, preventing impersonation.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/RegistryModuleOwnerCustom.sol",
+      "highlight": [
+        {
+          "start": 51,
+          "end": 60
+        }
+      ],
+      "title": "",
+      "id": "37130"
+    },
+    {
+      "type": "highlight",
+      "description": "All three public helpers converge here. `_registerAdmin` enforces self-registration (line 70-71) and then hands the request to `TokenAdminRegistry.proposeAdministrator` (line 74). The `AdministratorRegistered` event (line 76) finalises the flow.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/RegistryModuleOwnerCustom.sol",
+      "highlight": [
+        {
+          "start": 65,
+          "end": 77
+        }
+      ],
+      "title": "",
+      "id": "37131"
+    },
+    {
+      "type": "textOnly",
+      "description": "Regardless of where the admin identity comes from, the helper guarantees: the caller really is that admin, the request is forwarded to the registry, and observers get an event. That is how heterogeneous tokens onboard themselves safely.",
+      "title": "",
+      "id": "37132"
+    }
+  ]
+}

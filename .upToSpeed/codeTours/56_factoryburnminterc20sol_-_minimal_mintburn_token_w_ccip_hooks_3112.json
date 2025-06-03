@@ -1,0 +1,137 @@
+{
+  "title": "5.6: FactoryBurnMintERC20.sol – Minimal Mint/Burn Token w/ CCIP Hooks",
+  "id": "KfZa5rVhPFt2rY3MuBH4UYrX3RUeeyR6czk+93K64iU=",
+  "originalId": 3112,
+  "position": 31,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This tour follows `FactoryBurnMintERC20` – the concrete ERC-20 that `TokenPoolFactory` deploys – showing how **immutable economics**, **dual-admin roles**, and **helper functions** plug neatly into the registry-factory flow.",
+      "title": "",
+      "id": "37140"
+    },
+    {
+      "type": "highlight",
+      "description": "- `i_decimals` and `i_maxSupply` are immutable, guaranteeing precision and cap for the lifetime of the token.\n- `s_ccipAdmin` lives in its own storage slot – it is **not** `Ownable`’s `owner`; downstream registry code will read it with `getCCIPAdmin`.\n- Two `EnumerableSets` keep track of addresses allowed to mint or burn.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/FactoryBurnMintERC20.sol",
+      "highlight": [
+        {
+          "start": 36,
+          "end": 45
+        }
+      ],
+      "title": "",
+      "id": "37141"
+    },
+    {
+      "type": "highlight",
+      "description": "The constructor packs every deployment concern into one call:\n1. store the immutables and the initial `s_ccipAdmin` (line 63).\n2. perform a single `preMint` to the future owner (line 66).\n3. instantly grant that address mint & burn powers (lines 71-72) so the factory never needs a follow-up transaction.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/FactoryBurnMintERC20.sol",
+      "highlight": [
+        {
+          "start": 51,
+          "end": 73
+        }
+      ],
+      "title": "",
+      "id": "37142"
+    },
+    {
+      "type": "highlight",
+      "description": "A custom `supportsInterface` advertises every relevant standard – **ERC-20**, **burn/mint**, **Ownable**, **IERC165**, and `IGetCCIPAdmin` – letting off-chain tooling discover capabilities up-front.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/FactoryBurnMintERC20.sol",
+      "highlight": [
+        {
+          "start": 75,
+          "end": 82
+        }
+      ],
+      "title": "",
+      "id": "37143"
+    },
+    {
+      "type": "highlight",
+      "description": "Minimal owner-only helpers:\n- `grantMintAndBurnRoles` simply calls `grantMintRole` and `grantBurnRole`.\n- Each of `grantMintRole` and `grantBurnRole` uses `EnumerableSet.add` and emits its event only when the new address is actually added.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/FactoryBurnMintERC20.sol",
+      "highlight": [
+        {
+          "start": 166,
+          "end": 195
+        }
+      ],
+      "title": "",
+      "id": "37144"
+    },
+    {
+      "type": "highlight",
+      "description": "`onlyMinter` and `onlyBurner` modifiers consult the corresponding sets and revert with custom errors. This achieves cheap, explicit access control without relying on `OpenZeppelin’s RBAC overhead`. ",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/FactoryBurnMintERC20.sol",
+      "highlight": [
+        {
+          "start": 268,
+          "end": 280
+        }
+      ],
+      "title": "",
+      "id": "37145"
+    },
+    {
+      "type": "highlight",
+      "description": "**Mint/Burn** implementations delegate to `OpenZeppelin` yet add one critical rule: if `i_maxSupply` is non-zero, `mint` rejects any amount that would exceed it (line 156-158).  All variants inherit the permission checks from the earlier modifiers.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/FactoryBurnMintERC20.sol",
+      "highlight": [
+        {
+          "start": 130,
+          "end": 160
+        }
+      ],
+      "title": "",
+      "id": "37146"
+    },
+    {
+      "type": "highlight",
+      "description": "`getCCIPAdmin` exposes the registry-facing admin, while `setCCIPAdmin` lets the **owner** – not the current admin – rotate that slot.  Operational power (`Ownable`) and registry visibility (`CCIPAdmin`) remain deliberately separate.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/FactoryBurnMintERC20.sol",
+      "highlight": [
+        {
+          "start": 229,
+          "end": 246
+        }
+      ],
+      "title": "",
+      "id": "37147"
+    },
+    {
+      "type": "highlight",
+      "description": "During this snippet, right after deploying the token pool, the factory immediately grants it minting and burning permissions on the token contract—so the pool is ready to issue or retire tokens from the very first block. It then records the new pool in the token admin registry and begins the two-step transfer of token ownership to the caller.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 118,
+          "end": 127
+        }
+      ],
+      "title": "",
+      "id": "37148"
+    },
+    {
+      "type": "highlight",
+      "description": "Later, `RegistryModuleOwnerCustom` obtains the **CCIP admin** by calling `getCCIPAdmin()` (line 39). Keeping the **CCIP admin** distinct from `Ownable`’s owner allows the registry to query the correct admin address.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/RegistryModuleOwnerCustom.sol",
+      "highlight": [
+        {
+          "start": 33,
+          "end": 40
+        }
+      ],
+      "title": "",
+      "id": "37149"
+    },
+    {
+      "type": "textOnly",
+      "description": "In summary: **immutable supply rules** enforce **token economics**; roles are managed through compact `EnumerableSets`; `CCIP admin` and owner remain distinct; and the `factory` stitches everything together – pre-minting, wiring roles, and handing off ownership – in a single transaction ready for registry consumption.",
+      "title": "",
+      "id": "37150"
+    }
+  ]
+}

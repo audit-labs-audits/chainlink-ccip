@@ -1,0 +1,98 @@
+{
+  "title": "8.3: OnRamp: Destination-Chain Config & Allowlist",
+  "id": "94iFA2Q7/YNtpFpC3yx/IzfFhjHRcvfJJrsjgFx4pBE=",
+  "originalId": 3124,
+  "position": 43,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "We'll walk through how **OnRamp** manages **per-destination configuration** and **sender allowlists**: the `DestChainConfig` record, how it's updated, how sender allowlists are managed, and how to `query` them `off-chain`.",
+      "title": "",
+      "id": "37282"
+    },
+    {
+      "type": "highlight",
+      "description": "`DestChainConfig` holds per-destination state: `sequenceNumber` tracks the last used nonce and is always incremented before sending; `allowlistEnabled` toggles whether sender checks run; `router` is the only address allowed to forward messages; `allowedSendersList` is an `EnumerableSet.AddressSet` so that adds/removals stay unique and can be enumerated. `DestChainConfigArgs` (lines 94–98) bundle a selector with its new `router` and `allowlist` flag for batch updates.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 81,
+          "end": 99
+        }
+      ],
+      "title": "",
+      "id": "37283"
+    },
+    {
+      "type": "highlight",
+      "description": "The internal function `_applyDestChainConfigUpdates(...)` loops through the provided `DestChainConfigArgs` and updates each record. It reverts if the `selector` is zero (line 383), allows setting router to `address(0)` to pause message flow (line 388), updates the `allowlistEnabled` flag (line 390) but leaves `sequenceNumber` untouched, and emits `DestChainConfigSet` carrying the unchanged `sequenceNumber`, the new `router`, and flag (lines 392\u0013394).",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 376,
+          "end": 395
+        }
+      ],
+      "title": "",
+      "id": "37284"
+    },
+    {
+      "type": "highlight",
+      "description": "`applyAllowlistUpdates` enforces that only the contract owner or the configured `allowlistAdmin` can call it. The check at lines 439–442 reverts with `OnlyCallableByOwnerOrAllowlistAdmin` if the caller is neither.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 433,
+          "end": 444
+        }
+      ],
+      "title": "",
+      "id": "37285"
+    },
+    {
+      "type": "highlight",
+      "description": "When `allowlistConfigArgs.addedAllowlistedSenders` is non-empty (line 451), the code first checks that `allowlistEnabled` is true (line 452). Only when enabled do we loop over the addresses (line 453), ensure none are zero (line 455), add each to the `EnumerableSet` (line 458), and emit `AllowListSendersAdded` (line 461). If the flag is false, we revert at lines 462–463.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 446,
+          "end": 463
+        }
+      ],
+      "title": "",
+      "id": "37286"
+    },
+    {
+      "type": "highlight",
+      "description": "Removals simply loop over `removedAllowlistedSenders` (line 467) and call `.remove` on the set (line 468). If any addresses were dropped, the function emits `AllowListSendersRemoved` at lines 471–473. Note that removals are permitted regardless of the `allowlistEnabled` flag.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 467,
+          "end": 475
+        }
+      ],
+      "title": "",
+      "id": "37287"
+    },
+    {
+      "type": "highlight",
+      "description": "`getAllowedSendersList` returns: (i) the current `allowlistEnabled` flag and (ii) the full array of configured addresses by calling `values()` on the `EnumerableSet` (line 425). The list is always returned\t64even when disabled\t64so off-chain indexers and dashboards can inspect the stored configuration.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 420,
+          "end": 427
+        }
+      ],
+      "title": "",
+      "id": "37288"
+    },
+    {
+      "type": "textOnly",
+      "description": "These mechanisms combine to let operators batch-update **per-chain routers** and **allowlist flags**, maintain a unique set of **allowed senders per chain**, and expose both flag and list for off-chain consumption.",
+      "title": "",
+      "id": "37289"
+    }
+  ]
+}

@@ -1,0 +1,98 @@
+{
+  "title": "2.9: Message-Hook Interfaces",
+  "id": "ZNTQohE0vYLgLWEn2A7wxRFGopTvOv7m9qTo8uTFLpw=",
+  "originalId": 3092,
+  "position": 10,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Every `CCIP` message can pass through two optional hook contracts:\n\n- **validation**: block messages that violate custom rules.\n- **transformation**: rewrite the payload before it leaves or as it arrives.\n\nThe next steps show the tiny `interfaces` that define those hooks and how specialized On-/Off-Ramp contracts invoke them.",
+      "title": "",
+      "id": "37016"
+    },
+    {
+      "type": "highlight",
+      "description": "`IMessageInterceptor` is the validation extension point.\n\nLines 11-12 define a shared `MessageValidationError` so callers know what to catch, while 16-23 declare the two callbacks:\n• `onInboundMessage` – Off-Ramp may veto an incoming payload.\n• `onOutboundMessage` – On-Ramp may veto an outgoing payload.\nImplementations simply `revert MessageValidationError(...)` to stop the transfer.",
+      "file": "chains/evm/contracts/interfaces/IMessageInterceptor.sol",
+      "highlight": [
+        {
+          "start": 10,
+          "end": 24
+        }
+      ],
+      "title": "",
+      "id": "37017"
+    },
+    {
+      "type": "highlight",
+      "description": "The source-side ramp wires the outbound hook.\n\nBefore a message is accepted for sending (and well before any fees are locked in) line 191 calls `onOutboundMessage`.  A zero address disables the feature, so integrators opt-in by configuring their interceptor contract.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 185,
+          "end": 192
+        }
+      ],
+      "title": "",
+      "id": "37018"
+    },
+    {
+      "type": "highlight",
+      "description": "The destination-side ramp mirrors the pattern.\n\nJust before the receiver contract is invoked, line 617 passes the freshly decoded payload to `onInboundMessage`.  Any revert is wrapped as `MessageValidationError` (line 619) to surface a consistent error upstream.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 613,
+          "end": 620
+        }
+      ],
+      "title": "",
+      "id": "37019"
+    },
+    {
+      "type": "highlight",
+      "description": "<text>\n\n`IMessageTransformer` is the mutation extension point.\n\nLines 11-12 introduce `MessageTransformError`. Two functions return a *new* struct:\n\n- `transformOutboundMessage` – last chance to enrich or redact data before it leaves the source chain.\n- `transformInboundMessage` – first point where arriving data can be massaged.\n\nA revert should use `MessageTransformError` to signal failure.\n</text>",
+      "file": "chains/evm/contracts/interfaces/IMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 8,
+          "end": 30
+        }
+      ],
+      "title": "",
+      "id": "37020"
+    },
+    {
+      "type": "highlight",
+      "description": "`OnRampWithMessageTransformer` plugs the outbound transformer.\n\n`_postProcessMessage` (lines 45-48) delegates to `transformOutboundMessage`.  The `try/catch` converts any revert into `MessageTransformError` (line 53), so upstream code only needs to watch for the standard error.",
+      "file": "chains/evm/contracts/onRamp/OnRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 44,
+          "end": 55
+        }
+      ],
+      "title": "",
+      "id": "37021"
+    },
+    {
+      "type": "highlight",
+      "description": "`OffRampWithMessageTransformer` does the same on arrival.\n\nBefore executing the payload, `_beforeExecuteSingleMessage` (line 44) hands it to `transformInboundMessage`, again wrapping errors uniformly (line 51).",
+      "file": "chains/evm/contracts/offRamp/OffRampWithMessageTransformer.sol",
+      "highlight": [
+        {
+          "start": 42,
+          "end": 53
+        }
+      ],
+      "title": "",
+      "id": "37022"
+    },
+    {
+      "type": "textOnly",
+      "description": "### Recap\n\n- Implement `IMessageInterceptor` to **reject** unwanted traffic; revert with `MessageValidationError`.\n- Implement `IMessageTransformer` to **modify** data; return a new struct or revert with `MessageTransformError`.\n- Deploy your hook contracts and set their addresses on the specialized ramp variants.\n\nWith just these two interfaces, you can inject bespoke compliance checks, analytics, encryption, metadata enrichment, or rate-limiting without touching core **CCIP** logic.\n",
+      "title": "",
+      "id": "37023"
+    }
+  ]
+}

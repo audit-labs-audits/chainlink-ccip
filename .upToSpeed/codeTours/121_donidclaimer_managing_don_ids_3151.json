@@ -1,0 +1,150 @@
+{
+  "title": "12.1: DonIDClaimer: Managing DON IDs",
+  "id": "TSAjW5hUbcO3Se1QB2N4ZieQoJxMNs589Dfeoi3Dhpc=",
+  "originalId": 3151,
+  "position": 70,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This walkthrough shows how the contract allocates unique **DON IDs** while mirroring the global `CapabilitiesRegistry` counter. We proceed top-down so every moving part becomes obvious.",
+      "title": "",
+      "id": "37526"
+    },
+    {
+      "type": "highlight",
+      "description": "Top-level docs explain DonIDClaimer as a local allocator that fetches and syncs DON IDs from CapabilitiesRegistry to prevent ID collisions across parallel mint workflows.",
+      "file": "chains/evm/contracts/DonIDClaimer.sol",
+      "highlight": [
+        {
+          "start": 15,
+          "end": 23
+        }
+      ],
+      "title": "",
+      "id": "37527"
+    },
+    {
+      "type": "highlight",
+      "description": "External glue:\n- `Ownable2StepMsgSender` – upgrade-friendly ownership.\n- `EnumerableSet` – constant-time membership set for authorised deployers.\n- `ICapabilitiesRegistry` – single-function interface that reveals the network-wide next DON ID.\n",
+      "file": "chains/evm/contracts/DonIDClaimer.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 13
+        }
+      ],
+      "title": "",
+      "id": "37528"
+    },
+    {
+      "type": "highlight",
+      "description": "Errors and events are sparse but expressive:\n- `ZeroAddressNotAllowed` and `AccessForbidden` stop misuse early.\n- Three events broadcast changes that off-chain indexers care about.\n",
+      "file": "chains/evm/contracts/DonIDClaimer.sol",
+      "highlight": [
+        {
+          "start": 27,
+          "end": 33
+        }
+      ],
+      "title": "",
+      "id": "37529"
+    },
+    {
+      "type": "highlight",
+      "description": "Persistent state:\n- `typeAndVersion` – immutable metadata.\n- `s_nextDONId` – private cursor we hand out.\n- `i_capabilitiesRegistry` – immutable reference to the global source of truth.\n- `s_authorizedDeployers` – `EnumerableSet` controlling who may call the mutating flows.\n",
+      "file": "chains/evm/contracts/DonIDClaimer.sol",
+      "highlight": [
+        {
+          "start": 34,
+          "end": 43
+        }
+      ],
+      "title": "",
+      "id": "37530"
+    },
+    {
+      "type": "highlight",
+      "description": "Constructor step 1: \n- Lock in the registry address and reject the zero-address with a custom error.",
+      "file": "chains/evm/contracts/DonIDClaimer.sol",
+      "highlight": [
+        {
+          "start": 44,
+          "end": 50
+        }
+      ],
+      "title": "",
+      "id": "37531"
+    },
+    {
+      "type": "highlight",
+      "description": "Constructor step 2:\n- Adds the deployer (`msg.sender`) to the authorised set (line 53).\n- Bootstraps `s_nextDONId` from `CapabilitiesRegistry` (lines 56–57) so the contract starts in perfect sync.\n",
+      "file": "chains/evm/contracts/DonIDClaimer.sol",
+      "highlight": [
+        {
+          "start": 51,
+          "end": 57
+        }
+      ],
+      "title": "",
+      "id": "37532"
+    },
+    {
+      "type": "highlight",
+      "description": "`claimNextDONId()` is the happy-path allocator:\n- (Lines 63–65) enforce that only authorised deployers may claim.\n- (Line 66) logs the allocation.\n- (Line 68) returns the current cursor then post-increments it — a gas-cheap pattern that guarantees uniqueness.\n",
+      "file": "chains/evm/contracts/DonIDClaimer.sol",
+      "highlight": [
+        {
+          "start": 59,
+          "end": 69
+        }
+      ],
+      "title": "",
+      "id": "37533"
+    },
+    {
+      "type": "highlight",
+      "description": "`syncNextDONIdWithOffset(offset)` lets deployers skip IDs after an external registry bump:\n- Shares the same access guard (lines 77–78).\n- (Line 80) fetches the registry value and adds the caller-chosen offset.\n- (Line 82) emits the new cursor to help observability.\n",
+      "file": "chains/evm/contracts/DonIDClaimer.sol",
+      "highlight": [
+        {
+          "start": 71,
+          "end": 83
+        }
+      ],
+      "title": "",
+      "id": "37534"
+    },
+    {
+      "type": "highlight",
+      "description": "`setAuthorizedDeployer()` is owner-only (inherited modifier):\n- (Line 90) protects against the zero-address.\n- (Lines 92–96) mutate the `EnumerableSet`, toggling membership.\n- (Line 98) announces the change.\n",
+      "file": "chains/evm/contracts/DonIDClaimer.sol",
+      "highlight": [
+        {
+          "start": 89,
+          "end": 99
+        }
+      ],
+      "title": "",
+      "id": "37535"
+    },
+    {
+      "type": "highlight",
+      "description": "Two view helpers round off the public surface:\n- `getNextDONId()` exposes the private cursor to front-ends.\n- `isAuthorizedDeployer(addr)` mirrors the set membership check for quick UI access.\n",
+      "file": "chains/evm/contracts/DonIDClaimer.sol",
+      "highlight": [
+        {
+          "start": 101,
+          "end": 114
+        }
+      ],
+      "title": "",
+      "id": "37536"
+    },
+    {
+      "type": "textOnly",
+      "description": "**Access-control summary:**\n- Owner (from `Ownable2StepMsgSender`) can add or revoke deployers.\n- Any authorised deployer can claim IDs or resync.\n\n**Lifecycle recap:**\n- `constructor`\n- `claimNextDONId` (repeat)\n- Optional `syncNextDONIdWithOffset` when gaps arise.\n\n\n",
+      "title": "",
+      "id": "37537"
+    }
+  ]
+}

@@ -1,0 +1,227 @@
+{
+  "title": "5.5: TokenPoolFactory.sol – Deploying Tokens & Pools",
+  "id": "YaVPbecF/D73dyC6WCh+7B6QOvGrIbhZDpdrIUyJToM=",
+  "originalId": 3110,
+  "position": 30,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "The factory’s deterministic deployment flow revolves around five small data-structures.  We start by looking at them so later code is easy to read.",
+      "title": "",
+      "id": "37172"
+    },
+    {
+      "type": "highlight",
+      "description": "PoolType is a compact enum: every RemoteTokenPoolInfo must specify whether the remote pool will Burn/Mint or Lock/Release.  The choice decides which constructor signature is hashed later.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 27,
+          "end": 33
+        }
+      ],
+      "title": "",
+      "id": "37173"
+    },
+    {
+      "type": "highlight",
+      "description": "`RemoteTokenPoolInfo` is the factory’s main input. Several fields can be left **empty** so the factory predicts them:\n\n- **remotePoolAddress** – predicted with CREATE2 when blank.\n- **remoteTokenAddress** – likewise predicted.\n\nThe struct also passes everything needed to:\n\n- Re-create the remote constructor via `remoteChainConfig` and token decimals.\n- Preload rate-limits via `rateLimiterConfig`.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 33,
+          "end": 46
+        }
+      ],
+      "title": "",
+      "id": "37174"
+    },
+    {
+      "type": "highlight",
+      "description": "RemoteChainConfig lists the immutable contracts that already live on the other chain – its factory, router and RMN proxy – plus the remote token’s decimals.  These addresses become part of the hash we feed to CREATE2 so both chains converge on the same deterministic pool address.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 48,
+          "end": 54
+        }
+      ],
+      "title": "",
+      "id": "37175"
+    },
+    {
+      "type": "highlight",
+      "description": "When a pool is deployed it expects an array of TokenPool.ChainUpdate objects.  Each one joins a remote selector with predicted pool & token addresses and the initial rate-limiter buckets.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 87,
+          "end": 93
+        }
+      ],
+      "title": "",
+      "id": "37176"
+    },
+    {
+      "type": "textOnly",
+      "description": "With the data-shapes in mind we can skim the public API.  We first look at `deployTokenAndTokenPool`, used when the **ERC-20** does not yet exist.",
+      "title": "",
+      "id": "37177"
+    },
+    {
+      "type": "highlight",
+      "description": "Line 109 folds `salt` together with `msg.sender`, giving every user a private namespace and avoiding clashes.\nLine 115 then deploys the ERC-20 via CREATE2 using that personalised salt.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 103,
+          "end": 117
+        }
+      ],
+      "title": "",
+      "id": "37178"
+    },
+    {
+      "type": "highlight",
+      "description": "Immediately afterwards the pool is created (`_createTokenPool`).  The freshly-minted token grants the pool mint/burn rights (line 121), and `_setTokenPoolInTokenAdminRegistry` wires the pair into the registry so the bridge recognises it.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 118,
+          "end": 125
+        }
+      ],
+      "title": "",
+      "id": "37179"
+    },
+    {
+      "type": "highlight",
+      "description": "`deployTokenPoolWithExistingToken` re-uses the same salted CREATE2 strategy but skips token deployment and registry wiring—the caller handles those manually.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 144,
+          "end": 157
+        }
+      ],
+      "title": "",
+      "id": "37180"
+    },
+    {
+      "type": "textOnly",
+      "description": "Now the heart of the process: `_createTokenPool` builds deterministic addresses for every remote chain before the local pool even exists.",
+      "title": "",
+      "id": "37181"
+    },
+    {
+      "type": "highlight",
+      "description": "Setup is simple: allocate a ChainUpdate array sized to `remoteTokenPools.length` (line 177) and iterate.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 169,
+          "end": 180
+        }
+      ],
+      "title": "",
+      "id": "37182"
+    },
+    {
+      "type": "highlight",
+      "description": "Remote **token** address: if `remoteTokenAddress` is empty, lines 188-191 compute it by hashing the remote token’s init-code and feeding it into `salt.computeAddress` alongside the *remote* factory address.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 183,
+          "end": 194
+        }
+      ],
+      "title": "",
+      "id": "37183"
+    },
+    {
+      "type": "highlight",
+      "description": "Remote **pool** address: lines 200-204 hash the pool’s init-code *plus constructor params* via `_generatePoolInitcodeHash`; lines 207-208 then compute the address the remote factory will obtain with the same salt.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 195,
+          "end": 209
+        }
+      ],
+      "title": "",
+      "id": "37184"
+    },
+    {
+      "type": "highlight",
+      "description": "The predicted bytes are packed into a ChainUpdate struct ready for the pool’s `applyChainUpdates` call.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 211,
+          "end": 220
+        }
+      ],
+      "title": "",
+      "id": "37185"
+    },
+    {
+      "type": "highlight",
+      "description": "With the array complete the factory concatenates local constructor args (line 224) and deploys via CREATE2 (line 227).  Line 230 invokes `applyChainUpdates`, equipping the new pool with its full remote topology before anyone can interact with it.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 223,
+          "end": 230
+        }
+      ],
+      "title": "",
+      "id": "37186"
+    },
+    {
+      "type": "highlight",
+      "description": "Ownership of the pool is then transferred to the caller using Ownable2Step (line 232).",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 232,
+          "end": 235
+        }
+      ],
+      "title": "",
+      "id": "37187"
+    },
+    {
+      "type": "highlight",
+      "description": "`_generatePoolInitcodeHash` reproduces the *exact* byte sequence the remote chain will hash: init-code plus constructor args `(token, decimals, allowlist, rmnProxy, router)`.  A single missing byte here would yield divergent addresses.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 246,
+          "end": 263
+        }
+      ],
+      "title": "",
+      "id": "37188"
+    },
+    {
+      "type": "highlight",
+      "description": "`_setTokenPoolInTokenAdminRegistry` shows the automatic admin setup: the factory registers itself, accepts admin, records the pool, then starts the two-step transfer so the user ends up as admin.",
+      "file": "chains/evm/contracts/tokenAdminRegistry/TokenPoolFactory/TokenPoolFactory.sol",
+      "highlight": [
+        {
+          "start": 266,
+          "end": 278
+        }
+      ],
+      "title": "",
+      "id": "37189"
+    },
+    {
+      "type": "textOnly",
+      "description": "Key takeaways:\n•  Both chains derive their pool & token addresses from the same salted `CREATE2` formula, guaranteeing symmetry.\n•  Address prediction works because the factory can fully re-create the remote constructor payload via `RemoteChainConfig`.\n•  Registry wiring happens automatically, leaving the caller only to accept ownership and admin roles.",
+      "title": "",
+      "id": "37190"
+    }
+  ]
+}

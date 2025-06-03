@@ -1,0 +1,53 @@
+{
+  "title": "2.10: Misc Helper Interfaces",
+  "id": "Oimdyt/HxWqwS0jxBeMKPvO7XnvAl/CTxpOd55p0f/Q=",
+  "originalId": 3090,
+  "position": 11,
+  "steps": [
+    {
+      "type": "highlight",
+      "description": "IWrappedNative (line 7) extends IERC20 and adds only:\n- deposit() (payable) – mint wrapped tokens 1:1 for native coin\n- withdraw(uint256 wad) – burn wrapped tokens, release native coin\n\nThis minimal interface lets the system treat ETH like any ERC-20.",
+      "file": "chains/evm/contracts/interfaces/IWrappedNative.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 12
+        }
+      ],
+      "title": "",
+      "id": "36879"
+    },
+    {
+      "type": "highlight",
+      "description": "`ILinkAvailable` is aimed at Chainlink Automation.\n\nA contract that implements it exposes `linkAvailableForPayment()`, letting an off-chain upkeep read how much **LINK** is still spendable.  When the returned value dips below a threshold, the keeper can top-up the contract automatically, preventing request failures due to insufficient **LINK**.",
+      "file": "chains/evm/contracts/interfaces/automation/ILinkAvailable.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 8
+        }
+      ],
+      "title": "",
+      "id": "36880"
+    },
+    {
+      "type": "highlight",
+      "description": "The Router makes practical use of `IWrappedNative` when a user opts to pay fees in the chain’s native coin.\n\n- Line 125 asks the on-ramp for a fee quote (still denominated in the wrapped token).  \n- Line 131 wraps the entire `msg.value` via `deposit{value: feeTokenAmount}()`.  \n- Line 132 immediately forwards the freshly minted wrapped tokens to the on-ramp.\n\nThe symmetric path—calling `withdraw()`—would occur on the destination side when unwrapping is required.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 124,
+          "end": 133
+        }
+      ],
+      "title": "",
+      "id": "36881"
+    },
+    {
+      "type": "textOnly",
+      "description": "To conclude:\n\n- `IWrappedNative` gives the codebase an ERC-20–shaped handle to native coins, demonstrated above in the `Router`’s fee-payment flow.\n- `ILinkAvailable` exists for deployment tooling and keeper jobs that monitor **LINK** balances and refill them without manual intervention.\n\nWith these two helpers mapped out, the supporting utilities for native wrapping and **LINK** balance monitoring are now fully covered.",
+      "title": "",
+      "id": "36882"
+    }
+  ]
+}

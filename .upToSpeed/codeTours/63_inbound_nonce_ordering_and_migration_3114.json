@@ -1,0 +1,85 @@
+{
+  "title": "6.3: Inbound Nonce, Ordering & Migration",
+  "id": "Gt7scCrWed18Wp8oWTdtdob0APXPBpTmSwm1YKPvBp0=",
+  "originalId": 3114,
+  "position": 34,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "The `Off-Ramp` asks `NonceManager` to bump a sender’s **inbound nonce** before executing a message.  The next slides dissect the mechanics that keep execution ordered and show how older `on/off-ramp lanes` are respected during upgrades.",
+      "title": "",
+      "id": "37107"
+    },
+    {
+      "type": "highlight",
+      "description": "For every source-chain & sender pair the contract stores the last successfully executed nonce.  A zero value means no message from that sender has been executed since the upgrade.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 38,
+          "end": 41
+        }
+      ],
+      "title": "",
+      "id": "37108"
+    },
+    {
+      "type": "highlight",
+      "description": "- **incrementInboundNonce** performs three steps:\n  - **Line 89:** compute what the next nonce _should_ be.\n  - **Lines 91–96:** compare it to the Off-Ramp’s supplied `expectedNonce`; on mismatch, emit `SkippedIncorrectNonce` and return `false`, allowing the Off-Ramp to postpone the out-of-order message instead of reverting.\n  - **Line 98:** persist the increment when the check passes, ensuring strictly sequential execution.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 84,
+          "end": 101
+        }
+      ],
+      "title": "",
+      "id": "37109"
+    },
+    {
+      "type": "highlight",
+      "description": "SkippedIncorrectNonce is surfaced as an event so operators can monitor skipped messages.  (PreviousRampsUpdated is introduced later.)",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 15,
+          "end": 16
+        }
+      ],
+      "title": "",
+      "id": "37110"
+    },
+    {
+      "type": "highlight",
+      "description": "- Mirrors outbound logic but adds upgrade safety:\n  - If the local mapping has no entry yet (line 118), it queries the previous Off-Ramp’s `getSenderNonce` (lines 119–123).\n  - Preserves message ordering during migration to a fresh `NonceManager` instance.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 111,
+          "end": 127
+        }
+      ],
+      "title": "",
+      "id": "37111"
+    },
+    {
+      "type": "highlight",
+      "description": "- **applyPreviousRampsUpdates** is the owner-only hook that configures legacy lanes.\n- Lines 139–146 guard against accidental overwrites unless `overrideExistingRamps == true` (escape hatch).\n- Lines 149–152 store the new `prevOnRamp`/`prevOffRamp` addresses and emit `PreviousRampsUpdated` so observers can track the migration state.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 131,
+          "end": 154
+        }
+      ],
+      "title": "",
+      "id": "37112"
+    },
+    {
+      "type": "textOnly",
+      "description": "Putting it together:\n\n- The `Off-Ramp` proposes an expected nonce; `NonceManager` checks and only proceeds when it matches.\n- On mismatch, it emits `SkippedIncorrectNonce`, preserving the queue without reverting.\n- If the local nonce is zero, `_getInboundNonce` falls back to the previous Off-Ramp to maintain order during upgrades.\n- Operators set legacy lanes once (or override) via `applyPreviousRampsUpdates`, emitting `PreviousRampsUpdated`.",
+      "title": "",
+      "id": "37113"
+    }
+  ]
+}

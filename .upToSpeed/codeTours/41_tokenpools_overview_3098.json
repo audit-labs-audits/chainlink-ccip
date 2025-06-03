@@ -1,0 +1,117 @@
+{
+  "title": "4.1: TokenPools: Overview",
+  "id": "T8TakWrpOanf51OFRPreqpsRhXn/kKat139X8Rqn+qM=",
+  "originalId": 3098,
+  "position": 16,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "This quick walkthrough shows every pool contract that lives inside the bridge.  After these slides you will know which file implements which liquidity strategy.",
+      "title": "",
+      "id": "37624"
+    },
+    {
+      "type": "textOnly",
+      "description": "files under `chains/evm/contracts/pools/`:\n- `TokenPool.sol`\n- `LockReleaseTokenPool.sol`\n- `SiloedLockReleaseTokenPool.sol`\n- `BurnMintTokenPool.sol`\n- `BurnToAddressMintTokenPool.sol`\n- `BurnFromMintTokenPool.sol`\n- `BurnWithFromMintTokenPool.sol`\n- `USDC/`\n  - `BurnMintWithLockReleaseFlagTokenPool.sol`\n  - `USDCTokenPool.sol`\n  - `HybridLockReleaseUSDCTokenPool.sol`",
+      "title": "",
+      "id": "37625"
+    },
+    {
+      "type": "highlight",
+      "description": "The abstract `TokenPool base` (line 38) underpins every other pool, supplying ownership, rate-limiting and cross-chain helpers.",
+      "file": "chains/evm/contracts/pools/TokenPool.sol",
+      "highlight": [
+        {
+          "start": 36,
+          "end": 38
+        }
+      ],
+      "title": "",
+      "id": "37626"
+    },
+    {
+      "type": "highlight",
+      "description": "`LockReleaseTokenPool` (line 17) extends `TokenPool` and implements the classic **“lock on source / release on destination”** approach.",
+      "file": "chains/evm/contracts/pools/LockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 13,
+          "end": 18
+        }
+      ],
+      "title": "",
+      "id": "37627"
+    },
+    {
+      "type": "highlight",
+      "description": "`SiloedLockReleaseTokenPool` (line 16) keeps separate liquidity books per chain, preventing one lane from draining another.",
+      "file": "chains/evm/contracts/pools/SiloedLockReleaseTokenPool.sol",
+      "highlight": [
+        {
+          "start": 14,
+          "end": 18
+        }
+      ],
+      "title": "",
+      "id": "37628"
+    },
+    {
+      "type": "highlight",
+      "description": "`BurnMintTokenPool` (line 16) burns tokens on the source chain and mints new ones on the destination — no locked liquidity required.",
+      "file": "chains/evm/contracts/pools/BurnMintTokenPool.sol",
+      "highlight": [
+        {
+          "start": 10,
+          "end": 17
+        }
+      ],
+      "title": "",
+      "id": "37629"
+    },
+    {
+      "type": "highlight",
+      "description": "`BurnToAddressMintTokenPool` (line 19) performs a “black-hole” burn by transferring tokens to an unrecoverable address.",
+      "file": "chains/evm/contracts/pools/BurnToAddressMintTokenPool.sol",
+      "highlight": [
+        {
+          "start": 15,
+          "end": 22
+        }
+      ],
+      "title": "",
+      "id": "37630"
+    },
+    {
+      "type": "highlight",
+      "description": "`USDCTokenPool` (line 19) integrates Circle’s `CCTP`, letting the bridge burn & mint canonical `USDC` across chains.",
+      "file": "chains/evm/contracts/pools/USDC/USDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 17,
+          "end": 23
+        }
+      ],
+      "title": "",
+      "id": "37631"
+    },
+    {
+      "type": "highlight",
+      "description": "`HybridLockReleaseUSDCTokenPool` (line 27) defaults to CCTP burn/mint, can fall back to Lock/Release, and supports migrating lanes between the two.",
+      "file": "chains/evm/contracts/pools/USDC/HybridLockReleaseUSDCTokenPool.sol",
+      "highlight": [
+        {
+          "start": 22,
+          "end": 28
+        }
+      ],
+      "title": "",
+      "id": "37632"
+    },
+    {
+      "type": "textOnly",
+      "description": "Four strategy families:\n- **Lock/Release**\n- **Siloed Lock/Release**\n- **Burn/Mint (and burn-to-address)**\n- **USDC-specific pools (pure CCTP & Hybrid)**\n\nNext tours will dive first into `TokenPool.sol`, then each family in turn.",
+      "title": "",
+      "id": "37633"
+    }
+  ]
+}

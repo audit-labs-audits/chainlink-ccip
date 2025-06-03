@@ -1,0 +1,98 @@
+{
+  "title": "8.7: OnRamp: Security & Admin Operations",
+  "id": "+TjrrYLpL5/GyI7N6bhMspajxUZ2CyRFFzVSf/wpoDs=",
+  "originalId": 3129,
+  "position": 47,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "A brief walkthrough of three protective patterns inside `OnRamp`: a **hand-rolled re-entrancy guard**, an **RMN-driven kill-switch**, and a **permission-less fee-sweeping helper**.",
+      "title": "",
+      "id": "37332"
+    },
+    {
+      "type": "highlight",
+      "description": "**forwardFromRouter** begins with a **manual guard** – if the flag is already set (169) the call reverts; otherwise it is flipped to true (170).  This lets the function interact with untrusted pools without following the full CEI pattern.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 167,
+          "end": 172
+        }
+      ],
+      "title": "",
+      "id": "37333"
+    },
+    {
+      "type": "highlight",
+      "description": "Just before returning the `guard` is cleared again (259), so the next legitimate send can proceed.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 257,
+          "end": 260
+        }
+      ],
+      "title": "",
+      "id": "37334"
+    },
+    {
+      "type": "highlight",
+      "description": "`_setDynamicConfig()` refuses any update where `reentrancyGuardEntered` is already true. Governance therefore cannot accidentally or maliciously leave the contract permanently locked.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 346,
+          "end": 352
+        }
+      ],
+      "title": "",
+      "id": "37335"
+    },
+    {
+      "type": "highlight",
+      "description": "`CursedByRMN` is the dedicated error used when the `Risk-Monitor Network (RMN)` bans a destination chain selector.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 40,
+          "end": 41
+        }
+      ],
+      "title": "",
+      "id": "37336"
+    },
+    {
+      "type": "highlight",
+      "description": "Every fee quote first consults `RMN` (508).  If the selector is cursed the call reverts with `CursedByRMN`, turning `getFee()` into a repository-wide kill-switch.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 504,
+          "end": 510
+        }
+      ],
+      "title": "",
+      "id": "37337"
+    },
+    {
+      "type": "highlight",
+      "description": "`withdrawFeeTokens()` is openly callable: for each token it reads the OnRamp balance (523) and transfers it to the trusted `feeAggregator` (526), then emits an accounting event (528).  Callers cannot divert funds – they only help tidy them up.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 515,
+          "end": 531
+        }
+      ],
+      "title": "",
+      "id": "37338"
+    },
+    {
+      "type": "textOnly",
+      "description": "Together these fragments show how `OnRamp` blocks **re-entrancy**, honours a **repo-wide safety valve**, and keeps operational overhead low through **permission-less maintenance**.",
+      "title": "",
+      "id": "37339"
+    }
+  ]
+}

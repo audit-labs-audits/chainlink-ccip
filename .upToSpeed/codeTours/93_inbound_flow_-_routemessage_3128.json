@@ -1,0 +1,98 @@
+{
+  "title": "9.3: Inbound Flow – routeMessage",
+  "id": "F7jprGr/bsPDDZkaVPB04ipYWIRPP59eOAmI0ihKPAA=",
+  "originalId": 3128,
+  "position": 51,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "You already know how a message is stored and leaves an `On-Ramp`; in this tour we pick it up on the destination chain and watch it travel from the `Off-Ramp` to the user’s `contract`, focusing on the `Router`’s exact-gas delivery guard and `Off-Ramp` authorisation.",
+      "title": "",
+      "id": "37371"
+    },
+    {
+      "type": "highlight",
+      "description": "`executeSingleMessage` funnels every verified payload into the local `Router`. The original gas budget (`message.gasLimit`) and the fixed audit-margin (`i_gasForCallExactCheck`) are forwarded unchanged so the `Router` can reproduce the DON’s simulation.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 640,
+          "end": 645
+        }
+      ],
+      "title": "",
+      "id": "37372"
+    },
+    {
+      "type": "highlight",
+      "description": "`routeMessage` is the only entry-point Off-Ramps may call:\n- At line 167 we reject any caller that is not a registered Off-Ramp.\n- At line 171 we ABI-encode a clean `ccipReceive(message)` so no other function can be invoked.\n- At line 173 we ask `CallWithExactGas` to perform the call, passing the user’s `gasLimit` and capping the returned data.\n- At line 177 we emit `MessageExecuted`, recording which Off-Ramp executed which message and how it was encoded.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 165,
+          "end": 178
+        }
+      ],
+      "title": "",
+      "id": "37373"
+    },
+    {
+      "type": "highlight",
+      "description": "`MAX_RET_BYTES` (selector + four words = 132 bytes) is baked into the Router; anything larger is truncated by `CallWithExactGas`, eliminating return-data bombs.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 52,
+          "end": 56
+        }
+      ],
+      "title": "",
+      "id": "37374"
+    },
+    {
+      "type": "highlight",
+      "description": "The same `CallWithExactGas` helper is reused for pool interactions. In addition to `success` and `returnData` it reports `gasUsed` (line 689) so the `Off-Ramp` can keep accounting tight while still enforcing the same `MAX_RET_BYTES` ceiling (line 707).",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 689,
+          "end": 707
+        }
+      ],
+      "title": "",
+      "id": "37375"
+    },
+    {
+      "type": "highlight",
+      "description": "isOffRamp is nothing more than an `EnumerableSet` lookup, giving **O(1)** authorisation without touching storage layout used elsewhere.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 232,
+          "end": 236
+        }
+      ],
+      "title": "",
+      "id": "37376"
+    },
+    {
+      "type": "highlight",
+      "description": "The set key is built by shifting the `64-bit chain selector` into the `upper 160 bits` and OR-ing the `Off-Ramp address`. Packing the pair into `one word` keeps the set compact – the same pattern you met in **Tour 1**.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 181,
+          "end": 188
+        }
+      ],
+      "title": "",
+      "id": "37377"
+    },
+    {
+      "type": "textOnly",
+      "description": "Putting it together: the Off-Ramp is allowed through the `EnumerableSet` gate, the `Router` encodes a single `ccipReceive` call, and `CallWithExactGas` enforces both a gas ceiling and a strict 132-byte return cap before the `MessageExecuted` event finalises the hand-off.",
+      "title": "",
+      "id": "37378"
+    }
+  ]
+}

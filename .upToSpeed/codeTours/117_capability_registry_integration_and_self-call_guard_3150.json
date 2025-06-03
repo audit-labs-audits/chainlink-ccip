@@ -1,0 +1,137 @@
+{
+  "title": "11.7: Capability Registry Integration & Self-Call Guard",
+  "id": "kUiS7ZA1TubzA0S1lmNWx0RdEdJarSf2fb75weOF7uU=",
+  "originalId": 3150,
+  "position": 69,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "All configuration mutations travel a single, tightly-controlled path.  The `Capabilities Registry` is the sole external entry-point; `CCIPHome` validates and relays the request to its own internal `state-transition helpers`.  We will trace that route step by step.",
+      "title": "",
+      "id": "37515"
+    },
+    {
+      "type": "highlight",
+      "description": "Deployment injects the registry’s address and stores it in the immutable variable `i_capabilitiesRegistry`.  Once set, every access-control check compares against this constant so the authorised caller can never change.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 176,
+          "end": 185
+        }
+      ],
+      "title": "",
+      "id": "37516"
+    },
+    {
+      "type": "highlight",
+      "description": "`getCapabilityRegistry` exposes that immutable address.  Off-chain tooling can verify it, but the function itself is read-only and cannot modify state.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 191,
+          "end": 195
+        }
+      ],
+      "title": "",
+      "id": "37517"
+    },
+    {
+      "type": "highlight",
+      "description": "**supportsInterface** tells **ERC-165** consumers—specifically the **Capabilities Registry**—that this contract implements `ICapabilityConfiguration`. This discovery step is how the registry knows `CCIPHome` should receive config updates.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 197,
+          "end": 203
+        }
+      ],
+      "title": "",
+      "id": "37518"
+    },
+    {
+      "type": "highlight",
+      "description": "`beforeCapabilityConfigSet` is the only externally callable mutator.  The very first gate (lines 215-217) reverts unless `msg.sender` equals `i_capabilitiesRegistry`—no other address can even attempt a config change.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 205,
+          "end": 217
+        }
+      ],
+      "title": "",
+      "id": "37519"
+    },
+    {
+      "type": "highlight",
+      "description": "Next, the **selector allow-list** restricts the registry to three approved state-transition helpers: `setCandidate`, `revokeCandidate`, or `promoteCandidateAndRevokeActive`.  Any other selector is rejected immediately.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 219,
+          "end": 226
+        }
+      ],
+      "title": "",
+      "id": "37520"
+    },
+    {
+      "type": "highlight",
+      "description": "The payload must also embed the correct **DON-ID**.  This prevents the registry from accidentally forwarding a message meant for a different DON.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 228,
+          "end": 233
+        }
+      ],
+      "title": "",
+      "id": "37521"
+    },
+    {
+      "type": "highlight",
+      "description": "Finally, the `function` performs a `low-level call` to itself with the validated `payload` (line 235). If the invoked helper reverts, `assembly code` (lines 237-240) bubbles up the original `revert reason`—debugging information is never lost.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 234,
+          "end": 240
+        }
+      ],
+      "title": "",
+      "id": "37522"
+    },
+    {
+      "type": "highlight",
+      "description": "`_onlySelfCall` enforces that a helper may only be reached through an internal call; direct external invocations will revert with `CanOnlySelfCall`.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 520,
+          "end": 524
+        }
+      ],
+      "title": "",
+      "id": "37523"
+    },
+    {
+      "type": "highlight",
+      "description": "All three state-transition helpers begin with that guard.  `setCandidate`’s opening (lines 333-340) show the pattern: call `_onlySelfCall()`, then proceed with business logic.  `revokeCandidate` and `promoteCandidateAndRevokeActive` follow the same structure.",
+      "file": "chains/evm/contracts/capability/CCIPHome.sol",
+      "highlight": [
+        {
+          "start": 333,
+          "end": 340
+        }
+      ],
+      "title": "",
+      "id": "37524"
+    },
+    {
+      "type": "textOnly",
+      "description": "Putting the pieces together:\n- The `CapabilitiesRegistry` is the only caller that passes the constructor address check.\n- `beforeCapabilityConfigSet` verifies `selector` and `DON-ID`.\n- The call is forwarded internally.\n- `_onlySelfCall` confirms the invocation path.\n- The state-transition executes.\n\nNo alternative route can mutate `CCIPHome`’s configuration.\n",
+      "title": "",
+      "id": "37525"
+    }
+  ]
+}

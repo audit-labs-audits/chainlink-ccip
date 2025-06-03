@@ -1,0 +1,131 @@
+{
+  "title": "2.1: Interfaces – Directory Overview",
+  "id": "oSzQmGZ61zp+P5iDMHJXmB1EMfGSlcqFCw6CZWq4f4g=",
+  "originalId": 3097,
+  "position": 2,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Everything that an external contract might touch is abstracted behind Solidity interfaces in `chains/evm/contracts/interfaces/`.\n\nFile-tree snapshot:\n- `IAny2EVMMessageReceiver.sol`\n- `IEVM2AnyOnRamp*.sol`\n- `IPool.sol`\n- `IFeeQuoter.sol` / `IPriceRegistry.sol`\n- `INonceManager.sol`\n- `IRMN.sol` / `IRMNRemote.sol`\n- `ITokenAdminRegistry.sol`, `IOwner.sol`, `IGetCCIPAdmin.sol`\n- `IMessageInterceptor.sol`, `IMessageTransformer.sol`\n- `IWrappedNative.sol`, automation/`ILinkAvailable.sol`\n\nWe will now sample one file from each of the nine thematic groups; detailed signatures come later.",
+      "title": "",
+      "id": "37614"
+    },
+    {
+      "type": "highlight",
+      "description": "Messaging  ➜  `IRouter` is the single entry-point Off-Ramps call on the destination chain; `routeMessage` hands the `Any2EVM` payload to its final receiver and returns success, data, and gas used.",
+      "file": "chains/evm/contracts/interfaces/IRouter.sol",
+      "highlight": [
+        {
+          "start": 6,
+          "end": 24
+        }
+      ],
+      "title": "",
+      "id": "37615"
+    },
+    {
+      "type": "highlight",
+      "description": "On-Ramp  ➜  `IEVM2AnyOnRamp` augments the client view with sequencing helpers so the network can compute the next message nonce before an outbound send.",
+      "file": "chains/evm/contracts/interfaces/IEVM2AnyOnRamp.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 17
+        }
+      ],
+      "title": "",
+      "id": "37616"
+    },
+    {
+      "type": "highlight",
+      "description": "Pools  ➜  `IPoolV1` exposes `lockOrBurn` and `releaseOrMint` primitives that abstract whether liquidity is locked, burned, or minted when tokens traverse chains.",
+      "file": "chains/evm/contracts/interfaces/IPool.sol",
+      "highlight": [
+        {
+          "start": 9,
+          "end": 28
+        }
+      ],
+      "title": "",
+      "id": "37617"
+    },
+    {
+      "type": "highlight",
+      "description": "**Fee & Price**  ➜  `IFeeQuoter` (built on `IPriceRegistry`) validates a message and tells the sender exactly how much of the chosen fee-token is required.",
+      "file": "chains/evm/contracts/interfaces/IFeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 8,
+          "end": 23
+        }
+      ],
+      "title": "",
+      "id": "37618"
+    },
+    {
+      "type": "highlight",
+      "description": "**Nonce**  ➜  `INonceManager` increments and verifies per-sender nonces for both outbound and inbound flows, guaranteeing ordered delivery without extra state in user contracts.",
+      "file": "chains/evm/contracts/interfaces/INonceManager.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 22
+        }
+      ],
+      "title": "",
+      "id": "37619"
+    },
+    {
+      "type": "highlight",
+      "description": "Security  ➜  `IRMN` lets contracts query the **Risk Management Network**: is a Merkle root blessed, or is the system (optionally per-chain) cursed?",
+      "file": "chains/evm/contracts/interfaces/IRMN.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 16
+        }
+      ],
+      "title": "",
+      "id": "37620"
+    },
+    {
+      "type": "highlight",
+      "description": "**Administration / Registry**  ➜  `ITokenAdminRegistry` stores each `token`’s pool address and manages two-step admin transfers, keeping token governance separate from pool logic.",
+      "file": "chains/evm/contracts/interfaces/ITokenAdminRegistry.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 13
+        }
+      ],
+      "title": "",
+      "id": "37621"
+    },
+    {
+      "type": "highlight",
+      "description": "Message hooks  ➜  `IMessageInterceptor` is a plug-in point: custom contracts can veto or mutate inbound and outbound messages by reverting inside these callbacks.",
+      "file": "chains/evm/contracts/interfaces/IMessageInterceptor.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 18
+        }
+      ],
+      "title": "",
+      "id": "37622"
+    },
+    {
+      "type": "highlight",
+      "description": "Misc helpers  ➜  `IWrappedNative` standardises wrapping of the chain’s native asset (deposit / withdraw) so pools and fee logic can treat **ETH**-like value as an **ERC-20**.\n\nImplementations live elsewhere; these interfaces are the fire-wall of CCIP.",
+      "file": "chains/evm/contracts/interfaces/IWrappedNative.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 12
+        }
+      ],
+      "title": "",
+      "id": "37623"
+    }
+  ]
+}

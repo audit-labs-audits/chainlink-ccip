@@ -1,0 +1,111 @@
+{
+  "title": "8.6: OnRamp: Fee Quoting Flow",
+  "id": "UilU9rccyspAp4xhRS+9isRV6Xn+WRjwu6XJvIZ7szc=",
+  "originalId": 3127,
+  "position": 46,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "We will shadow one `CCIP` message twice.\n1. An off-chain caller asks, `\"how much will this cost?\"`\n2. The same message is later forwarded on-chain and the fee is stamped in.\n\nAt every hop the call stack is identical – `Router` → `OnRamp` → `FeeQuoter` – so the `FeeQuoter` contract stays the single source of truth.",
+      "title": "",
+      "id": "37306"
+    },
+    {
+      "type": "highlight",
+      "description": "A fee quote starts here.  `Router.getFee` only patches a missing `feeToken` (85-88), locates the lane’s `OnRamp` (89-90) and hands the request over (91-92).  No calculations are done at this layer.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 80,
+          "end": 92
+        }
+      ],
+      "title": "",
+      "id": "37307"
+    },
+    {
+      "type": "highlight",
+      "description": "`OnRamp.getFee` adds two decisive checks:\n- Lines 508–509 abort when the **Risk-Management-Network (RMN)** has cursed the lane.\n- Line 510 funnels the request straight into `FeeQuoter.getValidatedFee` – meaning every price comes from `FeeQuoter`.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 505,
+          "end": 511
+        }
+      ],
+      "title": "",
+      "id": "37308"
+    },
+    {
+      "type": "highlight",
+      "description": "`FeeQuoter.getValidatedFee` performs the heavy lifting once:\n– whitelists destination chain & fee token (562-566),\n– validates message structure / gas limits (569-574),\n– converts all costs into the caller’s token (574-575).\nThe off-chain tool now knows the exact amount it must pay.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 556,
+          "end": 575
+        }
+      ],
+      "title": "",
+      "id": "37309"
+    },
+    {
+      "type": "highlight",
+      "description": "When the user actually pays, Router forwards the message here.  `forwardFromRouter` lines 221-224 **re-calls** `FeeQuoter.processMessageArgs`, embedding identical pricing (`msgFeeJuels`) and deciding the out-of-order-execution flag.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 218,
+          "end": 225
+        }
+      ],
+      "title": "",
+      "id": "37310"
+    },
+    {
+      "type": "highlight",
+      "description": "Immediately afterwards the same function validates each pool’s response and attaches per-token exec gas through `FeeQuoter.processPoolReturnData`.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 233,
+          "end": 235
+        }
+      ],
+      "title": "",
+      "id": "37311"
+    },
+    {
+      "type": "highlight",
+      "description": "`processMessageArgs` mirrors the earlier quote: it converts the paid amount to `LINK` (1098-1109) and re-parses `extraArgs` according to chain family while enforcing the same **max-fee guard** (1099-1103).  Any divergence from the quoted logic would revert.",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 1086,
+          "end": 1110
+        }
+      ],
+      "title": "",
+      "id": "37312"
+    },
+    {
+      "type": "highlight",
+      "description": "`processPoolReturnData` walks every token transfer:  caps extraData (1168-1174), validates destination token addresses (1178-1182) and encodes the gas stipend that was just billed (1183-1189).",
+      "file": "chains/evm/contracts/FeeQuoter.sol",
+      "highlight": [
+        {
+          "start": 1158,
+          "end": 1189
+        }
+      ],
+      "title": "",
+      "id": "37313"
+    },
+    {
+      "type": "textOnly",
+      "description": "Take-away: `FeeQuoter` is queried twice with the same logic – first off-chain for a `quote`, then on-chain when funds move.  **RMN curse check** guards both paths, and any mismatch between `quote` and `embed` causes a revert.  `FeeQuoter` therefore remains the single authoritative calculator for `CCIP fees`.",
+      "title": "",
+      "id": "37314"
+    }
+  ]
+}

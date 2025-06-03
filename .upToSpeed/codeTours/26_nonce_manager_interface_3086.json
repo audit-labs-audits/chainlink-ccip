@@ -1,0 +1,85 @@
+{
+  "title": "2.6: Nonce Manager Interface",
+  "id": "GFaGSFv5NIbs9/RBTvZ7sb0ttw9SLLAkKuozbKp+SjE=",
+  "originalId": 3086,
+  "position": 7,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Replay protection is achieved by attaching an ever-increasing counter (a `nonce`) to every cross-chain message.  `NonceManager` keeps those counters and the off-ramp refuses to process a message whose number is not strictly the next one expected.",
+      "title": "",
+      "id": "36872"
+    },
+    {
+      "type": "highlight",
+      "description": "An on-ramp asks for the next nonce through `getIncrementedOutboundNonce`. The signature shows the two-part key – destination chain (`destChainSelector`) and the `EVM` sender address – making the counter lane-specific.",
+      "file": "chains/evm/contracts/interfaces/INonceManager.sol",
+      "highlight": [
+        {
+          "start": 4,
+          "end": 11
+        }
+      ],
+      "title": "",
+      "id": "36873"
+    },
+    {
+      "type": "highlight",
+      "description": "Inside the implementation a nested mapping `s_outboundNonces[destChainSelector][sender]` stores the last value.  `getIncrementedOutboundNonce` (lines 49-55) simply adds 1, persists it, and returns it, guaranteeing a unique, monotonically-increasing number for every <sender, dest-chain> pair.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 34,
+          "end": 56
+        }
+      ],
+      "title": "",
+      "id": "36874"
+    },
+    {
+      "type": "highlight",
+      "description": "The mirror function for the destination side is `incrementInboundNonce`. Callers must supply the nonce they *expect* to store; the function will only succeed if that value is indeed the next one.",
+      "file": "chains/evm/contracts/interfaces/INonceManager.sol",
+      "highlight": [
+        {
+          "start": 12,
+          "end": 22
+        }
+      ],
+      "title": "",
+      "id": "36875"
+    },
+    {
+      "type": "highlight",
+      "description": "**Implementation details:** `inboundNonce` is computed as `stored + 1` (line 89). Lines 91-96 compare it with `expectedNonce`; a mismatch triggers an event and returns false, leaving storage untouched. This single check prevents both re-plays and out-of-order execution.",
+      "file": "chains/evm/contracts/NonceManager.sol",
+      "highlight": [
+        {
+          "start": 84,
+          "end": 98
+        }
+      ],
+      "title": "",
+      "id": "36876"
+    },
+    {
+      "type": "highlight",
+      "description": "Real-world usage: every message execution attempts to bump the inbound nonce first.  When the bump fails (returns false) the off-ramp simply `continue`s, waiting for earlier messages – guaranteeing strict ordering.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 485,
+          "end": 492
+        }
+      ],
+      "title": "",
+      "id": "36877"
+    },
+    {
+      "type": "textOnly",
+      "description": "Together, a **guaranteed increment** on the source chain and a **conditional increment** on the destination chain ensure each message is processed exactly once and in order, closing the door on **re-plays**.",
+      "title": "",
+      "id": "36878"
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "title": "8.4: OnRamp: forwardFromRouter() Happy Path",
+  "id": "JYZGdxOLaxj6tDX8BXbVaF/nY538NI3jLZUl42xVRFI=",
+  "originalId": 3126,
+  "position": 44,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Starting from a user’s `ccipSend` call we will walk, line-by-line, through **Router** and **On-Ramp** logic until the `CCIPMessageSent` log is produced.  Each step shows the minimal code needed to understand a particular guard, accounting update, or state transition.",
+      "title": "",
+      "id": "37427"
+    },
+    {
+      "type": "highlight",
+      "description": "After collecting fees and moving `payload-tokens` into custody the Router hands control to the lane-specific on-ramp, forwarding the caller’s `address` so the on-ramp can later authenticate it.",
+      "file": "chains/evm/contracts/Router.sol",
+      "highlight": [
+        {
+          "start": 149,
+          "end": 151
+        }
+      ],
+      "title": "",
+      "id": "37428"
+    },
+    {
+      "type": "highlight",
+      "description": "Execution enters `forwardFromRouter` behind a lightweight **boolean re-entrancy guard**. The flag is checked first and set immediately, protecting the rest of the function—including `external pool calls`—from nested entry.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 167,
+          "end": 171
+        }
+      ],
+      "title": "",
+      "id": "37429"
+    },
+    {
+      "type": "highlight",
+      "description": "**Three authorisation gates** run back-to-back: (1) optional allow-list (`178-181`), (2) non-zero `originalSender`, and (3) `msg.sender` must be the configured `Router` (`184-185`).  Any failure aborts before funds are touched.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 178,
+          "end": 185
+        }
+      ],
+      "title": "",
+      "id": "37430"
+    },
+    {
+      "type": "highlight",
+      "description": "If a message-interceptor contract is configured, it receives a `read-only hook` allowing bespoke validation or analytics without modifying state.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 189,
+          "end": 192
+        }
+      ],
+      "title": "",
+      "id": "37431"
+    },
+    {
+      "type": "highlight",
+      "description": "A new `ramp-message struct` is created. The per-lane `sequenceNumber` is pre-incremented (202) guaranteeing uniqueness, while `nonce`, `feeValueJuels`, `extraArgs`, and `tokenAmounts` are placeholders for later steps.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 198,
+          "end": 206
+        }
+      ],
+      "title": "",
+      "id": "37432"
+    },
+    {
+      "type": "highlight",
+      "description": "`FeeQuoter.processMessageArgs` fills the blanks: converts the payer’s token amount into `feeValueJuels`, decides whether ordering guarantees are required (`isOutOfOrderExecution`), rewrites `extraArgs` if needed, and supplies `tokenReceiver` for wrapped-native pools.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 221,
+          "end": 225
+        }
+      ],
+      "title": "",
+      "id": "37433"
+    },
+    {
+      "type": "highlight",
+      "description": "Each user-supplied token is processed.  The helper returns metadata that is written directly into `newMessage.tokenAmounts`.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 228,
+          "end": 231
+        }
+      ],
+      "title": "",
+      "id": "37434"
+    },
+    {
+      "type": "highlight",
+      "description": "`_lockOrBurnSingleToken` routes the token to its authorised pool, performs the lock/burn, and reverts on unsupported assets—preventing partial messages.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 287,
+          "end": 296
+        }
+      ],
+      "title": "",
+      "id": "37435"
+    },
+    {
+      "type": "highlight",
+      "description": "**Nonce handling**: ordered messages receive the next outbound nonce from the global manager, ensuring **FIFO** delivery; out-of-order messages keep `nonce 0` to avoid blocking the queue.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 236,
+          "end": 238
+        }
+      ],
+      "title": "",
+      "id": "37436"
+    },
+    {
+      "type": "highlight",
+      "description": "Once every field is final the message is hashed for a **globally unique ID** and `CCIPMessageSent` is emitted, exposing the full payload to off-chain observers.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 247,
+          "end": 257
+        }
+      ],
+      "title": "",
+      "id": "37437"
+    },
+    {
+      "type": "highlight",
+      "description": "Only after the event is logged is the **re-entrancy flag** cleared, guaranteeing the entire **send flow** remained protected, yet leaving the contract ready for the next call.",
+      "file": "chains/evm/contracts/onRamp/OnRamp.sol",
+      "highlight": [
+        {
+          "start": 257,
+          "end": 259
+        }
+      ],
+      "title": "",
+      "id": "37438"
+    },
+    {
+      "type": "textOnly",
+      "description": "The on-ramp now returns the freshly minted `messageId` to the `Router`.  By following these checkpoints you can mentally trace every validation, asset movement, fee calculation, and ordering decision from the initial `ccipSend` to the final on-chain event.",
+      "title": "",
+      "id": "37439"
+    }
+  ]
+}

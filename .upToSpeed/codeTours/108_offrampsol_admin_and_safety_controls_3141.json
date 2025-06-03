@@ -1,0 +1,163 @@
+{
+  "title": "10.8: OffRamp.sol: Admin & Safety Controls",
+  "id": "wpFextbH5iBHmZWGD6LtDHpodpMGgMTAR3I1MQgU15w=",
+  "originalId": 3141,
+  "position": 60,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "The tour focuses on the two **owner-only configuration functions** and the **runtime guardrails** that protect the `OffRamp`. ",
+      "title": "",
+      "id": "37547"
+    },
+    {
+      "type": "highlight",
+      "description": "`applySourceChainConfigUpdates` is the primary governance entry-point. `onlyOwner` confines access and the body immediately delegates to an internal routine so the `constructor` and the `governor` share identical checks.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 996,
+          "end": 1002
+        }
+      ],
+      "title": "",
+      "id": "37548"
+    },
+    {
+      "type": "highlight",
+      "description": "First layer of sanity: each update is rejected if the `selector` is zero or the `router address` is zero. These early reverts prevent unusable lanes from ever entering storage.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 1009,
+          "end": 1019
+        }
+      ],
+      "title": "",
+      "id": "37549"
+    },
+    {
+      "type": "highlight",
+      "description": "**Second layer**: **on-ramp mutations** are disallowed once the lane is active, and blank / zero-encoded `on-ramp addresses` trigger immediate reverts. **Governance** can add or disable lanes but cannot silently swap their on-ramp.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 1024,
+          "end": 1039
+        }
+      ],
+      "title": "",
+      "id": "37550"
+    },
+    {
+      "type": "highlight",
+      "description": "`setDynamicConfig` is the other owner knob. `_setDynamicConfig` enforces one invariant — `feeQuoter` must be non-zero — before persisting the struct and emitting an event that observers can track.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 1053,
+          "end": 1070
+        }
+      ],
+      "title": "",
+      "id": "37551"
+    },
+    {
+      "type": "highlight",
+      "description": "Every execution path fetches the lane via `_getEnabledSourceChainConfig`. If governance sets `isEnabled` to false this helper reverts, effectively pausing traffic for that source chain.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 1078,
+          "end": 1084
+        }
+      ],
+      "title": "",
+      "id": "37552"
+    },
+    {
+      "type": "highlight",
+      "description": "Runtime guard: before any message is processed, `_executeSingleReport` checks whether **RMN** has cursed the lane. **DON** execution skips with an event; manual execution hard-reverts, shielding users from tainted data.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 372,
+          "end": 386
+        }
+      ],
+      "title": "",
+      "id": "37553"
+    },
+    {
+      "type": "highlight",
+      "description": "`_commitRoot` runs the identical `RMN` curse check, so poisoned merkle roots cannot be stored. Data ingest and data execution share the same defense.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 865,
+          "end": 876
+        }
+      ],
+      "title": "",
+      "id": "37554"
+    },
+    {
+      "type": "highlight",
+      "description": "`whenChainNotForked` compares the deployment `chainId` with the current `chainId` and `reverts` on divergence. This stops report replay across accidental or malicious forks.",
+      "file": "chains/evm/contracts/ocr/MultiOCR3Base.sol",
+      "highlight": [
+        {
+          "start": 327,
+          "end": 330
+        }
+      ],
+      "title": "",
+      "id": "37555"
+    },
+    {
+      "type": "highlight",
+      "description": "`OffRamp` calls the `fork guard` at the start of manual execution ensuring that users cannot push forked-chain reports into production contracts.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 283,
+          "end": 285
+        }
+      ],
+      "title": "",
+      "id": "37556"
+    },
+    {
+      "type": "highlight",
+      "description": "`gasForCallExactCheck` is stored as an immutable constant inside `StaticConfig`, making the exact-gas check auditable and immune to runtime tampering.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 160,
+          "end": 164
+        }
+      ],
+      "title": "",
+      "id": "37557"
+    },
+    {
+      "type": "highlight",
+      "description": "Every receiver call is routed through `CallWithExactGas` using that constant. If the call cannot proceed with the requested `gas` it reverts, blocking out-of-`gas` grief scenarios.",
+      "file": "chains/evm/contracts/offRamp/OffRamp.sol",
+      "highlight": [
+        {
+          "start": 640,
+          "end": 643
+        }
+      ],
+      "title": "",
+      "id": "37558"
+    },
+    {
+      "type": "textOnly",
+      "description": "`Owner-only updates` are tightly scoped and layered with sanity checks, while multiple runtime guards — `RMN curses`, `isEnabled gating`, `chain-fork detection`, and `exact-gas wrappers` — prevent malformed or replayed data from causing harm. You now have a checklist for auditing future governance proposals and `OffRamp` deployments.",
+      "title": "",
+      "id": "37559"
+    }
+  ]
+}
