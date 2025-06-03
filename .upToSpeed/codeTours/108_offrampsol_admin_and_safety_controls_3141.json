@@ -1,6 +1,6 @@
 {
   "title": "10.8: OffRamp.sol: Admin & Safety Controls",
-  "id": "wpFextbH5iBHmZWGD6LtDHpodpMGgMTAR3I1MQgU15w=",
+  "id": "R4RUSs+xeIfazB9eYbGYf1zhu6hHEHm4tVP9N2/Cl6o=",
   "originalId": 3141,
   "position": 60,
   "steps": [
@@ -25,7 +25,7 @@
     },
     {
       "type": "highlight",
-      "description": "First layer of sanity: each update is rejected if the `selector` is zero or the `router address` is zero. These early reverts prevent unusable lanes from ever entering storage.",
+      "description": "First layer: each update is rejected if the `selector` is zero or the `router address` is zero. These early reverts prevent unusable lanes from ever entering storage.",
       "file": "chains/evm/contracts/offRamp/OffRamp.sol",
       "highlight": [
         {
@@ -155,7 +155,7 @@
     },
     {
       "type": "textOnly",
-      "description": "`Owner-only updates` are tightly scoped and layered with sanity checks, while multiple runtime guards — `RMN curses`, `isEnabled gating`, `chain-fork detection`, and `exact-gas wrappers` — prevent malformed or replayed data from causing harm. You now have a checklist for auditing future governance proposals and `OffRamp` deployments.",
+      "description": "`Owner-only updates` are tightly scoped and layered with checks, while multiple runtime guards — `RMN curses`, `isEnabled gating`, `chain-fork detection`, and `exact-gas wrappers` — prevent malformed or replayed data from causing harm. ",
       "title": "",
       "id": "37559"
     }

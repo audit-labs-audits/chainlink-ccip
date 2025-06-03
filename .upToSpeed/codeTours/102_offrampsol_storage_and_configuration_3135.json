@@ -1,6 +1,6 @@
 {
   "title": "10.2: OffRamp.sol: Storage & Configuration",
-  "id": "v6INUqfEsfCpHSeshQFSX1Upt+uJpHs4ogToVOQFcsk=",
+  "id": "pYB0OaVZZOnMMyp2ki2ayko9AuLeQB6ZB85Ax7CUv6A=",
   "originalId": 3135,
   "position": 54,
   "steps": [
@@ -12,12 +12,12 @@
     },
     {
       "type": "highlight",
-      "description": "Three structs describe the Off-Ramp’s configuration surface.\n• StaticConfig – immutable parameters (lines 99-104).\n• SourceChainConfig – per-lane settings that may evolve (lines 107-113).\n• SourceChainConfigArgs – same fields plus selector, used when passing arrays (lines 118-123).",
+      "description": "Three structs describe the Off-Ramp’s configuration surface:\n\n- **StaticConfig** – immutable parameters (lines 99-104).\n- **SourceChainConfig** – per-lane settings that may evolve (lines 107-113).\n- **SourceChainConfigArgs** – same fields plus selector, used when passing arrays (lines 118-123).",
       "file": "chains/evm/contracts/offRamp/OffRamp.sol",
       "highlight": [
         {
-          "start": 96,
-          "end": 117
+          "start": 99,
+          "end": 123
         }
       ],
       "title": "",
@@ -38,7 +38,7 @@
     },
     {
       "type": "highlight",
-      "description": "Storage is split between immutables and ordinary variables.\n• The five `i_*` immutables (153-163) are the on-chain representation of StaticConfig.\n• `s_dynamicConfig` (165) caches DynamicConfig.\n• `s_sourceChainSelectors` (168) is an EnumerableSet keeping the list of enabled source chains.",
+      "description": "Storage is split between immutables and ordinary variables.\n\n- The five `i_*` immutables (153-163) are the on-chain representation of StaticConfig.\n- `s_dynamicConfig` (165) caches DynamicConfig.\n- `s_sourceChainSelectors` (168) is an EnumerableSet of enabled source chains.",
       "file": "chains/evm/contracts/offRamp/OffRamp.sol",
       "highlight": [
         {
@@ -51,7 +51,7 @@
     },
     {
       "type": "highlight",
-      "description": "State that grows over time.\n• `s_sourceChainConfigs` – mapping selector → SourceChainConfig (172).\n• `s_executionStates` – packed bitmaps for each (chain, seqNr) pair (177-179).\n• `s_roots` – commit timestamp per (chain, merkleRoot) (181-183).\n• `s_latestPriceSequenceNumber` – last accepted OCR seqNr (184).",
+      "description": "State that grows over time:\n\n- `s_sourceChainConfigs` — mapping selector → SourceChainConfig (line 172).\n- `s_executionStates` — packed bitmaps for each (chain, seqNr) pair (lines 177–179).\n- `s_roots` — commit timestamp per (chain, merkleRoot) (lines 181–183).\n- `s_latestPriceSequenceNumber` — last accepted OCR seqNr (line 184).",
       "file": "chains/evm/contracts/offRamp/OffRamp.sol",
       "highlight": [
         {
@@ -103,7 +103,7 @@
     },
     {
       "type": "highlight",
-      "description": "`_applySourceChainConfigUpdates` iterates over every SourceChainConfigArgs provided at deployment or later.\n• 1021-1044 – new or updated mapping entry in `s_sourceChainConfigs`.\n• 1046-1048 – selector inserted into `s_sourceChainSelectors` set.\n• 1049 – SourceChainConfigSet event records the change.",
+      "description": "`_applySourceChainConfigUpdates` iterates over every `SourceChainConfigArgs` provided at deployment or later:\n\n- 1021–1044 — new or updated mapping entry in `s_sourceChainConfigs`\n- 1046–1048 — selector inserted into `s_sourceChainSelectors` set\n- 1049 — `SourceChainConfigSet` event records the change",
       "file": "chains/evm/contracts/offRamp/OffRamp.sol",
       "highlight": [
         {
@@ -155,7 +155,7 @@
     },
     {
       "type": "textOnly",
-      "description": "**Key take-aways**\n• **StaticConfig** lives only in the five `i_*` immutables.\n• **DynamicConfig**, per-lane configs and the execution bookkeeping all sit in private/internal storage mappings declared at the top of the file.\n• The constructor writes once to each of these stores and emits events so observers can mirror the `OffRamp`’s initial state.\n• Later updates are gated by owner-only setters that reuse the same helper routines shown above.\nYou now know exactly where each `OffRamp` datum is stored and how to read it back via the provided view helpers.",
+      "description": "**Key take-aways**\n\n- **StaticConfig** lives only in the five `i_*` immutables.\n- **DynamicConfig**, per-lane configs and the execution bookkeeping all sit in private/internal storage mappings declared at the top of the file.\n- The constructor writes once to each of these stores and emits events so observers can mirror the `OffRamp`’s initial state.\n- Later updates are gated by owner-only setters that reuse the same helper routines shown above.\n\nYou now know exactly where each OffRamp datum is stored and how to read it back via the provided view helpers (`getStaticConfig`, `getDynamicConfig`, `getAllSourceChainConfigs`).",
       "title": "",
       "id": "37360"
     }

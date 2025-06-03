@@ -1,6 +1,6 @@
 {
   "title": "8.6: OnRamp: Fee Quoting Flow",
-  "id": "UilU9rccyspAp4xhRS+9isRV6Xn+WRjwu6XJvIZ7szc=",
+  "id": "s+ViGzsM4WSWCbNrb4/H6A0b4gHlULCBt8e/3BhgyyQ=",
   "originalId": 3127,
   "position": 46,
   "steps": [
@@ -38,7 +38,7 @@
     },
     {
       "type": "highlight",
-      "description": "`FeeQuoter.getValidatedFee` performs the heavy lifting once:\n– whitelists destination chain & fee token (562-566),\n– validates message structure / gas limits (569-574),\n– converts all costs into the caller’s token (574-575).\nThe off-chain tool now knows the exact amount it must pay.",
+      "description": "`FeeQuoter.getValidatedFee` performs the heavy lifting once:\n\n- Whitelists destination chain & fee token (562-566)\n- Validates message structure / gas limits (569-574)\n- Converts all costs into the caller’s token (574-575)\n\nThe off-chain tool now knows the exact amount it must pay.",
       "file": "chains/evm/contracts/FeeQuoter.sol",
       "highlight": [
         {
@@ -103,7 +103,7 @@
     },
     {
       "type": "textOnly",
-      "description": "Take-away: `FeeQuoter` is queried twice with the same logic – first off-chain for a `quote`, then on-chain when funds move.  **RMN curse check** guards both paths, and any mismatch between `quote` and `embed` causes a revert.  `FeeQuoter` therefore remains the single authoritative calculator for `CCIP fees`.",
+      "description": "**FeeQuoter** is queried twice with identical logic:\n  - Off-chain quote via `Router.getFee` → `OnRamp.getFee` → `FeeQuoter.getValidatedFee`\n  - On-chain embed via `forwardFromRouter` → `FeeQuoter.processMessageArgs`\n- **RMN curse check** (OnRamp lines 508–509) applies to both paths\n- Any mismatch between quoted and embedded fees triggers a revert\n- **FeeQuoter** remains the single source of truth for CCIP fees",
       "title": "",
       "id": "37314"
     }

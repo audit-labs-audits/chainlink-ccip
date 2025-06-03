@@ -1,6 +1,6 @@
 {
   "title": "9.2: Outbound Flow – ccipSend",
-  "id": "YQfcn8+IFWBbbbb67ZYQylWb6I43PhmjmnBZ5wJqSrQ=",
+  "id": "quFhPDdUwitN9sS1g8xRekvjvnea6rHsfJD8XinuAw4=",
   "originalId": 3131,
   "position": 50,
   "steps": [
@@ -38,11 +38,11 @@
     },
     {
       "type": "highlight",
-      "description": "Native-fee branch:\n• `feeToken == 0` signals ETH/MATIC etc. (l.120).\n• The field is temporarily rewritten to the wrapped native address (l.123) and quoted (l.125).\n• Under-payment reverts with `InsufficientFeeTokenAmount` (l.126-127).\n• The **entire `msg.value`** is wrapped (l.131) and transferred to the on-ramp (l.132-133).  Over-payments are accepted without refund.",
+      "description": "Now switch to the ‘native-fee’ branch (see lines 120–133). Here, when the router notices the fee token is the zero address, it swaps in the wrapped native token and delegates fee computation to the destination chain’s OnRamp via getFee. The contract then ensures that the ETH sent covers the quoted fee—otherwise it reverts with InsufficientFeeTokenAmount. If there’s enough, it wraps the entire msg.value into wrapped native and forwards it to the on-ramp. Any extra ETH sent beyond the quoted fee is not returned.",
       "file": "chains/evm/contracts/Router.sol",
       "highlight": [
         {
-          "start": 119,
+          "start": 120,
           "end": 133
         }
       ],
@@ -51,7 +51,7 @@
     },
     {
       "type": "highlight",
-      "description": "ERC-20-fee branch:\n• Any non-zero `msg.value` is illegal (l.134) → `InvalidMsgValue`.\n• The quote is fetched (l.136) and exactly that many `feeToken` are pulled from the caller into the on-ramp with `safeTransferFrom` (l.137-138).",
+      "description": "ERC-20-fee branch:\n- Any non-zero `msg.value` is illegal (line 134), reverting with `InvalidMsgValue`.\n- The fee quote is fetched (line 136), and exactly that many `feeToken` are pulled from the caller into the on-ramp via `safeTransferFrom` (lines 137-138).",
       "file": "chains/evm/contracts/Router.sol",
       "highlight": [
         {
@@ -103,7 +103,7 @@
     },
     {
       "type": "highlight",
-      "description": "Other failure modes surfaced earlier come from the interface:\n• `UnsupportedDestinationChain` – no on-ramp configured.\n• `InsufficientFeeTokenAmount` – under-paying native fees.\n• `InvalidMsgValue` – `msg.value` supplied while choosing an ERC-20 fee token.",
+      "description": "Failure modes in IRouterClient:\n- UnsupportedDestinationChain(destChainSelector): no on-ramp configured\n- InsufficientFeeTokenAmount(): fee too low\n- InvalidMsgValue(): msg.value sent when using ERC-20 fees",
       "file": "chains/evm/contracts/interfaces/IRouterClient.sol",
       "highlight": [
         {
@@ -116,7 +116,7 @@
     },
     {
       "type": "textOnly",
-      "description": "After `ccipSend` returns:\n• Fee tokens sit on the on-ramp.\n• Payload tokens sit inside their pools.\n• Message metadata is held by the on-ramp.\nThe router itself holds nothing.  You can now trace every `wei` or `ERC-20` that leaves the dApp during a cross-chain send.",
+      "description": "After `ccipSend` returns:\n\n- Fee tokens sit on the on-ramp.\n- Payload tokens sit inside their pools.\n- Message metadata is held by the on-ramp.\n\nThe router itself holds nothing. You can now trace every `wei` or `ERC-20` that leaves the dApp during a cross-chain send.",
       "title": "",
       "id": "37370"
     }

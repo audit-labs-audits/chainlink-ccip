@@ -1,6 +1,6 @@
 {
   "title": "10.6: OffRamp.sol: Token Release & Mint Mechanics",
-  "id": "5QrK94xldR2DtbcskfLGCIXAH6omQeeL/sc4YJaEMgU=",
+  "id": "8rKnTQcBy0eqFHfvbzcLC7ZxgESJ+fwyfcuBhuhzWdk=",
   "originalId": 3139,
   "position": 58,
   "steps": [
@@ -25,7 +25,7 @@
     },
     {
       "type": "highlight",
-      "description": "Inside _releaseOrMintSingleToken, the first task is to discover a **trusted pool** for the local token.\n• Line 673 asks TokenAdminRegistry for the pool address.\n• Line 678 uses ERC-165 to verify that the address really claims CCIP_POOL_V1 support.\nEither test failing aborts the whole message before any external call is attempted.",
+      "description": "Inside `_releaseOrMintSingleToken`, we resolve and validate the pool for this token before any external call:\n- Look up the pool address for `localToken` via the TokenAdminRegistry.\n- Immediately verify that the returned address is non-zero and supports the `CCIP_POOL_V1` interface (via ERC-165).\n- If either check fails, the function reverts with `NotACompatiblePool`, preventing any downstream calls to an untrusted or incompatible pool.",
       "file": "chains/evm/contracts/offRamp/OffRamp.sol",
       "highlight": [
         {
@@ -64,11 +64,11 @@
     },
     {
       "type": "highlight",
-      "description": "The actual release/mint is carried out via CallWithExactGas (lines 689-708):\n• The payload encodes IPoolV1.releaseOrMint (691-702).\n• OffRamp forwards only the gas that remains after the pre-balance snapshot (705).\n• Return-data is capped, and any failure is re-thrown as TokenHandlingError (711, just below).",
+      "description": "Release/mint is executed via `CallWithExactGas._callWithExactGasSafeReturnData`.\n- Payload encodes `IPoolV1.releaseOrMint` with its input struct (lines 691-702).\n- Only the remaining gas after the pre-balance snapshot (`gasLeft`) is forwarded (line 705).\n- Return data is capped at `Internal.MAX_RET_BYTES`; failures are wrapped in `TokenHandlingError` (line 711).",
       "file": "chains/evm/contracts/offRamp/OffRamp.sol",
       "highlight": [
         {
-          "start": 685,
+          "start": 689,
           "end": 708
         }
       ],

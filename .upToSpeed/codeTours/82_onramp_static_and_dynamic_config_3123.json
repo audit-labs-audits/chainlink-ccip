@@ -1,6 +1,6 @@
 {
   "title": "8.2: OnRamp: Static & Dynamic Config",
-  "id": "DQJolhK6hVy/DdVKNIILIiiABmVfYYIUnDnm1/JLHoY=",
+  "id": "GwpLczG+hPvz/Y/pYaYO1gZal1NiJh3+bezXqXilOHs=",
   "originalId": 3123,
   "position": 42,
   "steps": [
@@ -90,7 +90,7 @@
     },
     {
       "type": "textOnly",
-      "description": "<text>\n\n**Key take-aways**\n- StaticConfig fields are copied into `immutable` storage → **never change**.\n- DynamicConfig lives in `s_dynamicConfig` → **owner can overwrite the entire struct**; each overwrite is validated and logged.\n- `allowlistAdmin` has a narrow delegated power: it can update sender allow-lists, nothing else.\n\nThis division tells you exactly what behaviour is guaranteed stable after deployment and who can alter the parts that are not.\n</text>",
+      "description": "**Key take-aways**\n- StaticConfig fields are copied into `immutable` storage → **never change**.\n- DynamicConfig lives in `s_dynamicConfig` → **owner can overwrite the entire struct**; each overwrite is validated and logged.\n- `allowlistAdmin` has a narrow delegated power: it can update sender allow-lists, nothing else.\n\nThis division tells you exactly what behaviour is guaranteed stable after deployment and who can alter the parts that are not.",
       "title": "",
       "id": "37254"
     }

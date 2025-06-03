@@ -1,6 +1,6 @@
 {
   "title": "10.7: OffRamp.sol: Manual Execution & Gas Overrides",
-  "id": "LyQ8G7tdZ8cnMzKPpZh0hnMSyCbIweLTy7YiPoL4Qtg=",
+  "id": "zgh6RHqX7ED9Xsdl8O/Wu7n6yybODl7pEdHcmZo7+Rw=",
   "originalId": 3140,
   "position": 59,
   "steps": [
@@ -51,7 +51,7 @@
     },
     {
       "type": "highlight",
-      "description": "**Second guard-rail**: the caller may only increase\u00151 never decrease\u00151 the `gasLimit` for the receiver.  Lowering would let an attacker force an early **FAILURE** marking; therefore `newLimit < original gasLimit` is forbidden.",
+      "description": "**Second guard-rail**: the caller may only increase, but never decrease, the `gasLimit` for the receiver.  Lowering would let an attacker force an early **FAILURE** marking; therefore `newLimit < original gasLimit` is forbidden.",
       "file": "chains/evm/contracts/offRamp/OffRamp.sol",
       "highlight": [
         {
